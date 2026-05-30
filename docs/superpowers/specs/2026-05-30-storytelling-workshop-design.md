@@ -233,6 +233,34 @@ Config {                // Global, vom Admin anpassbar
 
 ---
 
+## Visuelles Design
+
+### Stil
+- Minimalistisch, modern, sehr intuitiv
+- Mobil-optimiert: iPad Portrait & Landscape
+- Heller Hintergrund, schwarze Schrift
+- Leichte Animationen (Stationswechsel, Speichern-Feedback, Choice-Hinzufügen)
+
+### Farben
+- **Hintergrund:** Weiß (`#FFFFFF`) / Hellgrau (`#F9F9F9`)
+- **Text:** Fast-Schwarz (`#1A1A1A`)
+- **Primärakzent:** Amber/Orange (`#F59E0B`) — Buttons, aktive Elemente, Highlights
+- **Sekundärakzent:** Indigo (`#4F46E5`) — Fortschritt, Charakter-Karte, Links
+- **Warnung/Hinweis:** Sanftes Amber (`#FEF3C7`) für Wortlimit-Hinweise
+
+### Typografie
+- Klare, moderne Sans-Serif (z.B. Inter)
+- Großzügige Zeilenabstände für lesbare Textfelder
+- Story-Code im Header: Monospace, groß, auffällig
+
+### Animationen
+- Stationswechsel: sanftes Slide / Fade
+- Choice-Karten: Einblenden beim Hinzufügen
+- Speichern: kurzes Puls-Feedback im Header
+- Wortlimit-Hinweis: sanftes Erscheinen (kein hartes Aufpoppen)
+
+---
+
 ## Offene Punkte / Später
 
 - Flowchart-Visualisierung der Verzweigungen (als optionales End-Feature)
