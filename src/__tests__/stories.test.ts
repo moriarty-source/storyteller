@@ -60,10 +60,11 @@ describe("createStory", () => {
 
     expect(story.code).toBe("TEST");
     expect(story.status).toBe("active");
-    expect(story.character).toEqual({});
-    expect(story.world).toEqual({});
+    expect(story.character).toMatchObject({ name: "", strength: "Mutig", weakness: "", goal: "" });
+    expect(story.world).toMatchObject({ description: "", problem: "" });
     expect(story.inventory).toEqual([]);
-    expect(story.stations).toEqual([]);
+    expect(story.stations).toHaveLength(6);
+    expect(story.stations[0]).toMatchObject({ id: 1, text: "", choices: [], completed: false });
     expect(typeof story.createdAt).toBe("string");
     expect(typeof story.updatedAt).toBe("string");
   });

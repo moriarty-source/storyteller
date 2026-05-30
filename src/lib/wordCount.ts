@@ -1,7 +1,8 @@
 /**
  * Count words in a string. Splits on whitespace, ignores empty tokens.
  */
-export function countWords(text: string): number {
+export function countWords(text: string | undefined | null): number {
+  if (!text) return 0;
   const trimmed = text.trim();
   if (trimmed.length === 0) return 0;
   return trimmed.split(/\s+/).length;

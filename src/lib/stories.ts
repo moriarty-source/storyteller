@@ -1,4 +1,4 @@
-import { Story, StoryStatus, Character, World, Station } from "@/types/story";
+import { Story, StoryStatus, Character, World, Station, STATIONS } from "@/types/story";
 import { getDb } from "@/lib/db";
 
 // Raw row shape from SQLite
@@ -26,12 +26,37 @@ function rowToStory(row: StoryRow): Story {
   };
 }
 
+const DEFAULT_CHARACTER: Character = {
+  name: "",
+  strength: "Mutig",
+  weakness: "",
+  goal: "",
+  secret: "",
+};
+
+const DEFAULT_WORLD: World = {
+  description: "",
+  problem: "",
+};
+
+const DEFAULT_STATIONS: Station[] = STATIONS.map((s) => ({
+  id: s.id,
+  text: "",
+  choices: [],
+  completed: false,
+}));
+
 export function createStory(code: string): Story {
   const db = getDb();
   db.prepare(`
     INSERT INTO stories (code, status, character, world, inventory, stations)
-    VALUES (?, 'active', '{}', '{}', '[]', '[]')
-  `).run(code);
+    VALUES (?, 'active', ?, ?, '[]', ?)
+  `).run(
+    code,
+    JSON.stringify(DEFAULT_CHARACTER),
+    JSON.stringify(DEFAULT_WORLD),
+    JSON.stringify(DEFAULT_STATIONS)
+  );
   return getStory(code) as Story;
 }
 
