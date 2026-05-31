@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { updateStory } from "@/lib/stories";
 import { getAdminPassword } from "@/lib/config";
+import { ensureDb } from "@/lib/db";
 
 async function isAuthorized(req: NextRequest): Promise<boolean> {
   const pw = req.headers.get("x-admin-password");
@@ -9,6 +10,7 @@ async function isAuthorized(req: NextRequest): Promise<boolean> {
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
+  await ensureDb();
   if (!await isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
