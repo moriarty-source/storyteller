@@ -36,15 +36,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # 3. Build on Pi
 Write-Host "[3/4] Building on Pi..." -ForegroundColor Yellow
-ssh -i $SshKey "pi@${PiIp}" @"
-    set -e
-    source ~/.bashrc
-    rm -rf ~/storyteller
-    git clone ~/storyteller.bundle ~/storyteller
-    cd ~/storyteller
-    npm install --omit=dev
-    npm run build
-"@
+ssh -i $SshKey "pi@${PiIp}" "bash -i -c 'set -e; rm -rf ~/storyteller; git clone ~/storyteller.bundle ~/storyteller; cd ~/storyteller; npm install --omit=dev; npm run build'"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Build failed" -ForegroundColor Red
@@ -53,15 +45,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # 4. Install systemd service
 Write-Host "[4/4] Installing systemd service..." -ForegroundColor Yellow
-ssh -i $SshKey "pi@${PiIp}" @"
-    set -e
-    sudo mv ~/storyteller.service /etc/systemd/system/
-    sudo systemctl daemon-reload
-    sudo systemctl enable storyteller
-    sudo systemctl restart storyteller
-    sleep 2
-    sudo systemctl status storyteller
-"@
+ssh -i $SshKey "pi@${PiIp}" "sudo mv ~/storyteller.service /etc/systemd/system/ && sudo systemctl daemon-reload && sudo systemctl enable storyteller && sudo systemctl restart storyteller && sleep 2 && sudo systemctl status storyteller"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Service installation failed" -ForegroundColor Red
