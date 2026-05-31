@@ -44,8 +44,8 @@ if (-not $npmPath) {
     Write-Host "[INFO] Detected npm path: $npmPath" -ForegroundColor Cyan
 }
 
-# Generate service file with correct npm path
-$npmDir = [System.IO.Path]::GetDirectoryName($npmPath)
+# Generate service file with correct npm path (use LastIndexOf to keep forward slashes)
+$npmDir = $npmPath.Substring(0, $npmPath.LastIndexOf('/'))
 $serviceContent = @"
 [Unit]
 Description=Story Maker - Storytelling Workshop Tool
