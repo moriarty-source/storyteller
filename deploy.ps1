@@ -36,7 +36,7 @@ if ($LASTEXITCODE -ne 0) {
 
 # 3. Build on Pi
 Write-Host "[3/4] Building on Pi..." -ForegroundColor Yellow
-ssh -i $SshKey "pi@${PiIp}" "bash -i -c 'set -e; rm -rf ~/storyteller; git clone ~/storyteller.bundle ~/storyteller; cd ~/storyteller; npm install --omit=dev; npm run build'"
+ssh -i $SshKey "pi@${PiIp}" "bash -i -c 'set -e; rm -rf ~/storyteller; git clone ~/storyteller.bundle ~/storyteller; cd ~/storyteller; npm ci; npm run build'"
 
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Build failed" -ForegroundColor Red
