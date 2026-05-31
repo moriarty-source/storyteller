@@ -38,6 +38,7 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "[3/4] Building on Pi..." -ForegroundColor Yellow
 ssh -i $SshKey "pi@${PiIp}" @"
     set -e
+    source ~/.bashrc
     rm -rf ~/storyteller
     git clone ~/storyteller.bundle ~/storyteller
     cd ~/storyteller
@@ -53,11 +54,13 @@ if ($LASTEXITCODE -ne 0) {
 # 4. Install systemd service
 Write-Host "[4/4] Installing systemd service..." -ForegroundColor Yellow
 ssh -i $SshKey "pi@${PiIp}" @"
+    set -e
     sudo mv ~/storyteller.service /etc/systemd/system/
     sudo systemctl daemon-reload
     sudo systemctl enable storyteller
     sudo systemctl restart storyteller
-    echo 'Service installed and started'
+    sleep 2
+    sudo systemctl status storyteller
 "@
 
 if ($LASTEXITCODE -ne 0) {
