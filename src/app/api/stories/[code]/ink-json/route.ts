@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
 import { getStory } from "@/lib/stories";
 import { compileToInk } from "@/lib/inkCompiler";
 import { Compiler } from "inkjs/compiler/Compiler";
@@ -9,7 +9,7 @@ interface RouteContext {
   params: Promise<{ code: string }>;
 }
 
-export async function GET(_req: Request, { params }: RouteContext) {
+export async function GET(_req: NextRequest, { params }: RouteContext) {
   const { code } = await params;
   const story = getStory(code.toUpperCase());
 
@@ -25,7 +25,7 @@ export async function GET(_req: Request, { params }: RouteContext) {
     const inkSource = compileToInk(story, { forReader: true });
     const compiler = new Compiler(inkSource);
     const compiled = compiler.Compile();
-    const json = compiled.ToJson();
+    const json = compiled.ToJson()!;
     return NextResponse.json({ json });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Unknown error";
