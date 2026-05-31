@@ -1,5 +1,7 @@
 // Vercel PostgreSQL Database Connection
 // Uses @vercel/postgres for serverless-compatible database access
+// 
+// Usage: Call ensureDb() at the start of each API route that needs DB access
 
 import { sql } from "@vercel/postgres";
 
@@ -8,6 +10,10 @@ export { sql };
 let dbInitialized = false;
 let dbInitPromise: Promise<void> | null = null;
 
+/**
+ * Initialize database tables and seed default config.
+ * Safe to call multiple times - uses promise deduplication.
+ */
 export async function initDatabase(): Promise<void> {
   if (dbInitialized) return;
   
@@ -47,9 +53,7 @@ export async function initDatabase(): Promise<void> {
       console.log('✓ Config table ready');
 
       // Seed default config if not present
-      const existingConfig = await sql`
-        SELECT key FROM config WHERE key = 'word_limits'
-      `;
+      const existingConfig = await sql`SELECT key FROM config WHERE key = 'word_limits'`;
       
       if (existingConfig.rows.length === 0) {
         const { DEFAULT_WORD_LIMITS } = await import("@/types/story");
@@ -60,9 +64,7 @@ export async function initDatabase(): Promise<void> {
         console.log('✓ Default word limits seeded');
       }
 
-      const existingPw = await sql`
-        SELECT key FROM config WHERE key = 'admin_password'
-      `;
+      const existingPw = await sql`SELECT key FROM config WHERE key = 'admin_password'`;
       
       if (existingPw.rows.length === 0) {
         await sql`
@@ -84,6 +86,10 @@ export async function initDatabase(): Promise<void> {
   return dbInitPromise;
 }
 
+/**
+ * Ensure database is initialized before use.
+ * Call this at the start of each API route.
+ */
 export async function ensureDb(): Promise<void> {
   if (!dbInitialized) {
     await initDatabase();
@@ -91,5 +97,5 @@ export async function ensureDb(): Promise<void> {
 }
 
 export async function closeDb(): Promise<void> {
-  // No-op for Vercel Postgres (connection pooling is managed automatically)
+  // No-op for Vercel Postgres (connection pooling managed automatically)
 }

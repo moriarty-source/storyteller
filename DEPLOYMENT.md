@@ -1,83 +1,158 @@
-# Storyteller - Deployment & Session State
+# 🚀 Deployment Guide
 
-## 🚀 Deployment-Optionen
+## Vercel Cloud (Empfohlen)
 
-### ⚠️ WICHTIG: Vercel Serverless Limitation
+### Einmaliges Setup
 
-**Aktuelles Problem:** SQLite funktioniert NICHT auf Vercel Serverless!
-- Die `data/stories.db` Datei wird bei jedem Build gelöscht
-- API-Aufrufe scheitern mit "Failed to create story"
+1. **GitHub Repository forken**
+   ```bash
+   git clone https://github.com/moriarty-source/storyteller.git
+   ```
 
-### Empfohlene Lösungen
+2. **Auf Vercel importieren**
+   - https://vercel.com/new
+   - GitHub Repository auswählen
+   - "Deploy" klicken
 
-#### Option 1: Lokaler Server (Vorgesehen im Workshop-Konzept)
-**Für:** Raspberry Pi / Lokales Netzwerk im Kulturkino
+3. **PostgreSQL Database hinzufügen**
+   - Im Vercel Dashboard: Project → Storage → Add Database
+   - "PostgreSQL" → "Neon" (kostenlos, 0.5 GB)
+   - "Create" klicken
+   - Vercel setzt `DATABASE_URL` automatisch
+
+4. **Fertig!**
+   - App ist live unter `https://your-app.vercel.app`
+   - Datenbank wird beim ersten Request automatisch initialisiert
+
+### Deployment aktualisieren
 
 ```bash
-# Auf Raspberry Pi oder lokalem Server
-npm install
-npm run build
-npm start
-
-# Zugriff im lokalen Netzwerk:
-# http://192.168.x.xxx:3000
+git add .
+git commit -m "feat: your changes"
+git push origin master
 ```
 
-**Vorteile:**
-- ✅ SQLite persistiert lokal
-- ✅ Kein Internet nötig
-- ✅ Schnell im lokalen WLAN
-- ✅ Entspricht dem ursprünglichen Konzept
-
-#### Option 2: Vercel mit PostgreSQL
-**Für:** Cloud-Hosting mit persistenter Datenbank
-
-1. Neon Postgres einrichten (kostenlos): https://neon.tech
-2. DATABASE_URL in Vercel Environment Variables setzen
-3. Code auf Prisma/PostgreSQL umstellen
-
-**Aufwand:** Mittel (Code-Änderungen nötig)
-
-#### Option 3: Vercel Blob Storage + SQLite
-**Für:** Experimentell, nicht produktionsreif
+Vercel deployed automatisch bei jedem Push!
 
 ---
 
-## 🏠 Aktuelle Empfehlung für Workshop
+## Lokaler Server (Für Workshops ohne Internet)
 
-**Für den 3-Stunden-Workshop im Kulturkino:**
-
-1. **Raspberry Pi oder Laptop als Server**
-2. **Lokales WLAN-Netzwerk**
-3. **SQLite bleibt unverändert**
-
-### Deployment auf lokalem Server:
+### Installation
 
 ```bash
-# 1. Repository klonen
+# Clone
 git clone https://github.com/moriarty-source/storyteller.git
 cd storyteller
 
-# 2. Installation
+# Install
 npm install
 
-# 3. Build
+# Build
 npm run build
 
-# 4. Starten
+# Start
 npm start
+```
 
-# 5. IP-Adresse herausfinden
-ipconfig  # Windows
-ifconfig  # Mac/Linux
+### Netzwerk-Zugriff
 
-# 6. Auf iPads eingeben:
-# http://[IP-ADRESSE]:3000
+1. **IP-Adresse herausfinden**
+   ```bash
+   ipconfig  # Windows
+   ifconfig  # Mac/Linux
+   ```
+
+2. **Firewall konfigurieren**
+   ```powershell
+   # Windows PowerShell (Admin)
+   New-NetFirewallRule -DisplayName "Storyteller" -Direction Inbound -LocalPort 3000 -Protocol TCP -Action Allow
+   ```
+
+3. **Auf iPads zugreifen**
+   - Safari öffnen
+   - `http://[IP-ADRESSE]:3000` eingeben
+   - "Zum Home-Bildschirm hinzufügen" für Vollbild
+
+### Daten persistieren
+
+Die SQLite-Datenbank wird gespeichert unter:
+```
+./data/stories.db
+```
+
+**Backup erstellen:**
+```bash
+# Windows
+Copy-Item data\stories.db data\stories-backup-$(Get-Date -Format 'yyyy-MM-dd').db
+
+# Mac/Linux
+cp data/stories.db data/stories-backup-$(date +%Y-%m-%d).db
 ```
 
 ---
 
-## 📋 Session State - 2026-05-31
+## Environment Variables
+
+| Variable | Wert | Beschreibung |
+|----------|------|--------------|
+| `DATABASE_URL` | (von Vercel) | PostgreSQL Connection String |
+
+### Für lokalen Server (SQLite)
+
+Keine Environment Variables nötig - SQLite wird automatisch verwendet.
+
+---
+
+## Testing
+
+```bash
+# Alle Tests
+npm test
+
+# Build testen
+npm run build
+
+# Production lokal testen
+npm start
+```
+
+---
+
+## Bekannte Einschränkungen
+
+### Vercel Serverless
+- ✅ PostgreSQL funktioniert einwandfrei
+- ✅ Automatische Skalierung
+- ✅ Kostenlose Tier ausreichend für Workshops
+- ⏳ Cold Start beim ersten Request (~5-10s)
+
+### Lokaler Server
+- ✅ Keine Internet-Verbindung nötig
+- ✅ Schnell im lokalen WLAN
+- ⚠️ Manuelle Backups erforderlich
+- ⚠️ Begrenzt auf lokale Netzwerk-Reichweite
+
+---
+
+## Support
+
+**Probleme?**
+1. README.md konsultieren
+2. GitHub Issues: https://github.com/moriarty-source/storyteller/issues
+
+**Workshop-Checkliste:**
+- [ ] Server installiert und gestartet
+- [ ] Firewall konfiguriert
+- [ ] IP-Adresse notiert
+- [ ] Test-Geschichte erstellt
+- [ ] Mit eigenem iPad getestet
+- [ ] Backup-Prozedur getestet
+
+---
+
+**Letztes Update:** 2026-05-31  
+**Status:** ✅ Production Ready
 
 ### ✅ Abgeschlossene Arbeiten
 

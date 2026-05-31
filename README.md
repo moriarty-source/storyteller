@@ -1,107 +1,212 @@
-# Story Maker — Storytelling Workshop Tool
+# Storyteller - Interaktives Storytelling Tool
 
-Interaktives Webtool für den Storytelling-Workshop im Kulturkino. Schüler der 6. und 7. Klasse schreiben angeleitete interaktive Geschichten basierend auf der Heldenreise.
+Ein browserbasiertes Tool für Schreibworkshops (Klassen 6-7), mit dem Schüler interaktive Geschichten erstellen können.
 
-## Entwicklung (lokal)
+**Live:** https://storyteller-app-cyan.vercel.app
 
-```bash
-npm install
-npm run dev
-```
+---
 
-Dann http://localhost:3000 öffnen.
+## 🚀 Quick Start
 
-## Produktion (Raspberry Pi)
-
-### Deployment (von Windows/Mac)
-
-Aus dem Storyteller-Ordner:
-
-```powershell
-# Passwort-Login auf Pi aktivieren (einmalig):
-ssh pi@192.168.178.70
-sudo sed -i 's/#PasswordAuthentication yes/PasswordAuthentication yes/' /etc/ssh/sshd_config
-sudo systemctl restart ssh
-exit
-
-# Dann deployen (mit deploy.ps1 auf Windows):
-./deploy.ps1 192.168.178.70
-```
-
-Das Skript:
-- Erstellt ein Bundle mit allen Code-Änderungen
-- Lädt es auf den Pi hoch
-- Baut die App neu
-- Installiert einen systemd service für Autostart
-- Startet die App
-
-### Manuelle Installation auf dem Pi
-
-Falls du lieber manuell deployest:
+### Für Workshop-Leiter (Raspberry Pi / Lokaler Server)
 
 ```bash
-cd ~
-git clone [repo-url] storyteller
+# 1. Repository klonen
+git clone https://github.com/moriarty-source/storyteller.git
 cd storyteller
-npm install --omit=dev
+
+# 2. Installation
+npm install
+
+# 3. Build
 npm run build
 
-# Service installieren (für Autostart)
-sudo cp storyteller.service /etc/systemd/system/
-sudo systemctl daemon-reload
-sudo systemctl enable storyteller
-sudo systemctl start storyteller
+# 4. Server starten
+npm start
+
+# 5. IP-Adresse herausfinden
+ipconfig  # Windows (nach IPv4 suchen)
+ifconfig  # Mac/Linux
+
+# 6. Auf iPads: http://[IP-ADRESSE]:3000
 ```
 
-### Erreichbarkeit
+### Vercel Cloud Deployment
 
-Der Server läuft auf Port 3000. Im Workshop-WLAN ist die App erreichbar unter:
-http://[PI-IP-ADRESSE]:3000
+Die Anwendung ist bereits auf Vercel deployed. Für eigene Instanz:
 
-Die IP-Adresse des Pi findest du mit: `hostname -I`
+1. Repository forken
+2. Auf Vercel importieren
+3. PostgreSQL Database hinzufügen (Storage → Add Database → PostgreSQL → Neon)
+4. Fertig!
 
-### App-Management
+---
+
+## 📋 Features
+
+### Für Schüler
+- ✅ Character Sheet (Name, Stärke, Schwäche, Ziel, Geheimnis)
+- ✅ Inventar-System
+- ✅ 6 Stationen der Heldenreise
+- ✅ 2-3 Entscheidungen pro Station (Diamond-Pattern)
+- ✅ Auto-Save (500ms Debounce)
+- ✅ Word Counter mit Fortschrittsanzeige
+- ✅ Interaktiver Reader zum Durchspielen
+- ✅ PDF-Export für fertige Geschichten
+
+### Für Lehrkräfte
+- ✅ Admin-Board mit Übersicht aller Geschichten
+- ✅ Geschichten als "abgeschlossen" markieren
+- ✅ Wort-Limits konfigurierbar
+- ✅ Passwort-geschützter Bereich
+
+---
+
+## 🏗️ Tech Stack
+
+| Komponente | Technologie |
+|------------|-------------|
+| Framework | Next.js 16 (App Router, Turbopack) |
+| Sprache | TypeScript |
+| Styling | Tailwind CSS 4 |
+| Datenbank | Vercel PostgreSQL (via @vercel/postgres) |
+| Story-Engine | inkjs 2.4 |
+| PDF-Export | @react-pdf/renderer |
+| Hosting | Vercel |
+
+---
+
+## 📁 Projektstruktur
+
+```
+src/
+├── app/                    # Next.js App Router
+│   ├── api/               # API Routes
+│   │   ├── stories/       # Story CRUD
+│   │   └── admin/         # Admin endpoints
+│   ├── story/[code]/      # Story pages
+│   │   ├── read/          # Interactive reader
+│   │   └── view/          # Static view + PDF
+│   └── admin/             # Admin board
+├── components/            # React Components
+│   ├── StoryEditor.tsx    # Main editor
+│   ├── StoryReader.tsx    # Interactive reader
+│   ├── CharacterSheet.tsx # Station 0
+│   ├── StationEditor.tsx  # Stations 1-6
+│   └── ...
+├── lib/                   # Utilities
+│   ├── db.ts             # PostgreSQL connection
+│   ├── stories.ts        # Story CRUD
+│   ├── config.ts         # Config management
+│   └── inkCompiler.ts    # Story → Ink compiler
+└── types/                # TypeScript types
+    └── story.ts
+```
+
+---
+
+## 🔧 Development
 
 ```bash
-# Status ansehen
-sudo systemctl status storyteller
+# Installation
+npm install
 
-# Logs live anschauen
-sudo journalctl -u storyteller -f
+# Development Server
+npm run dev
 
-# Neustart
-sudo systemctl restart storyteller
+# Production Build
+npm run build
+npm start
 
-# Stoppen
-sudo systemctl stop storyteller
+# Tests
+npm test
+
+# Lint
+npm run lint
 ```
 
-## Workshop-Anleitung (für Lehrkräfte)
+### Environment Variables (für Vercel)
 
-1. Pi starten und sicherstellen, dass er im Workshop-WLAN ist
-2. App läuft automatisch (systemd service)
-   - Falls nötig manuell starten: `sudo systemctl start storyteller`
-   - Status prüfen: `sudo systemctl status storyteller`
-3. Schüler öffnen http://[PI-IP]:3000 auf den iPads
-4. Admin-Board: http://[PI-IP]:3000/admin (Standard-Passwort: admin)
+Wird automatisch von Vercel gesetzt bei PostgreSQL-Integration:
+- `DATABASE_URL` - PostgreSQL connection string
 
-### Admin-Board Features
-- Alle Geschichten im Überblick mit Fortschritt
-- Geschichte "Abschließen" → Schüler sehen schön formatierte Version + PDF-Export
-- Wort-Limits live anpassen (ohne Neustart)
+---
 
-### Admin-Passwort ändern
+## 📊 Datenbank-Schema
 
-Das Standard-Passwort ist "admin". Es kann über die Datenbank geändert werden:
+### stories table
+```sql
+CREATE TABLE stories (
+  code TEXT PRIMARY KEY,
+  status TEXT DEFAULT 'active',  -- 'active' or 'completed'
+  character JSONB DEFAULT '{}',
+  world JSONB DEFAULT '{}',
+  inventory JSONB DEFAULT '[]',
+  stations JSONB DEFAULT '[]',
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+)
+```
 
+### config table
+```sql
+CREATE TABLE config (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL
+)
+```
+
+---
+
+## 🎯 Workshop-Ablauf (3 Stunden)
+
+### Phase 1: Welt & Figur (30 Min)
+- Character Sheet ausfüllen
+- Welt-Beschreibung + Problem
+- Inventar einführen
+
+### Phase 2: Heldenreise (90 Min)
+- 6 Stationen durcharbeiten
+- Pro Station: Text + 2-3 Entscheidungen
+- Wort-Limits beachten
+
+### Phase 3: Abschluss (60 Min)
+- Geschichten "abschließen" (Admin)
+- Reader testen
+- PDF-Export zeigen
+- Gemeinsames Lesen
+
+---
+
+## 🐛 Troubleshooting
+
+### "Database unavailable"
+- Vercel: PostgreSQL im Dashboard hinzufügen
+- Lokal: DATABASE_URL in .env.local setzen
+
+### "Port 3000 already in use"
 ```bash
-sqlite3 data/stories.db "UPDATE config SET value='NEUES_PASSWORT' WHERE key='adminPassword';"
+PORT=3001 npm start
 ```
 
-## Technologie
+### iPads können nicht verbinden
+- Firewall: Port 3000 freigeben
+- Gleiches WLAN-Netzwerk prüfen
+- Test: `curl http://localhost:3000`
 
-- Next.js 15 (App Router)
-- SQLite (better-sqlite3)
-- inkjs (Ink story engine)
-- @react-pdf/renderer (PDF-Export)
-- Tailwind CSS v4
+---
+
+## 📞 Support
+
+- **GitHub Issues:** https://github.com/moriarty-source/storyteller/issues
+- **Dokumentation:** DEPLOYMENT.md für detaillierte Setup-Anleitung
+
+---
+
+## 📝 License
+
+MIT License - frei für Bildungszwecke nutzbar
+
+**Erstellt:** 2026-05-31  
+**Letztes Update:** 2026-05-31  
+**Status:** ✅ Production Ready
