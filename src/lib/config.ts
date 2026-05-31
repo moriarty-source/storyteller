@@ -1,37 +1,43 @@
-import { WordLimits, DEFAULT_WORD_LIMITS } from "@/types/story";
-import { getDb } from "@/lib/db";
+import { sql } from "@vercel/postgres";
+import type { WordLimits } from "@/types/story";
+import { DEFAULT_WORD_LIMITS } from "@/types/story";
 
-const WORD_LIMITS_KEY = "wordLimits";
-const ADMIN_PASSWORD_KEY = "adminPassword";
-
-export function getWordLimits(): WordLimits {
-  const db = getDb();
-  const row = db
-    .prepare("SELECT value FROM config WHERE key = ?")
-    .get(WORD_LIMITS_KEY) as { value: string } | undefined;
-  if (!row) return { ...DEFAULT_WORD_LIMITS };
-  return JSON.parse(row.value) as WordLimits;
+export async function getWordLimits(): Promise<WordLimits> {
+  const result = await sql`
+    SELECT value FROM config WHERE key = 'word_limits'
+  `;
+  
+  if (result.rows.length === 0) {
+    return DEFAULT_WORD_LIMITS;
+  }
+  
+  return JSON.parse((result.rows[0] as any).value);
 }
 
-export function setWordLimits(limits: WordLimits): void {
-  const db = getDb();
-  db.prepare(
-    "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)"
-  ).run(WORD_LIMITS_KEY, JSON.stringify(limits));
+export async function setWordLimits(limits: WordLimits): Promise<void> {
+  await sql`
+    INSERT INTO config (key, value) 
+    VALUES ('word_limits', ${JSON.stringify(limits)}::jsonb)
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+  `;
 }
 
-export function getAdminPassword(): string {
-  const db = getDb();
-  const row = db
-    .prepare("SELECT value FROM config WHERE key = ?")
-    .get(ADMIN_PASSWORD_KEY) as { value: string } | undefined;
-  if (!row) return "admin";
-  return row.value;
+export async function getAdminPassword(): Promise<string> {
+  const result = await sql`
+    SELECT value FROM config WHERE key = 'admin_password'
+  `;
+  
+  if (result.rows.length === 0) {
+    return "workshop2024";
+  }
+  
+  return JSON.parse((result.rows[0] as any).value);
 }
 
-export function setAdminPassword(password: string): void {
-  const db = getDb();
-  db.prepare(
-    "INSERT OR REPLACE INTO config (key, value) VALUES (?, ?)"
-  ).run(ADMIN_PASSWORD_KEY, password);
+export async function setAdminPassword(password: string): Promise<void> {
+  await sql`
+    INSERT INTO config (key, value) 
+    VALUES ('admin_password', ${JSON.stringify(password)}::jsonb)
+    ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value
+  `;
 }

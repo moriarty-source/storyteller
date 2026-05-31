@@ -8,8 +8,7 @@ interface PageProps {
 
 export default async function StoryViewPage({ params }: PageProps) {
   const { code } = await params;
-
-  const story = getStory(code);
+  const story = await getStory(code);
 
   if (!story) {
     redirect("/");

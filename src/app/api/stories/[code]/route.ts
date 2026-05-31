@@ -7,7 +7,7 @@ export async function GET(
   { params }: { params: Promise<{ code: string }> }
 ) {
   const { code } = await params;
-  const story = getStory(code);
+  const story = await getStory(code);
   if (!story) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
   }
@@ -23,7 +23,7 @@ export async function PUT(
     Pick<Story, "character" | "world" | "inventory" | "stations">
   >;
 
-  const updated = updateStory(code, {
+  const updated = await updateStory(code, {
     character: body.character,
     world: body.world,
     inventory: body.inventory,

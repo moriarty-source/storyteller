@@ -42,3 +42,7 @@ next-env.d.ts
 
 # SQLite database
 /data
+
+.vercel
+
+/src/generated/prisma

@@ -1,11 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { listStories } from "@/lib/stories";
-import { checkAdminAuth } from "@/lib/adminAuth";
+import { getAdminPassword } from "@/lib/config";
 
-export async function GET(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const pw = req.headers.get("x-admin-password");
+  const expected = await getAdminPassword();
+  return pw === expected;
+}
+
+export async function GET(req: NextRequest) {
+  if (!await isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const stories = listStories();
+  const stories = await listStories();
   return NextResponse.json(stories);
 }

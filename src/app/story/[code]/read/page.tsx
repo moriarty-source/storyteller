@@ -8,7 +8,7 @@ interface PageProps {
 
 export default async function StoryReadPage({ params }: PageProps) {
   const { code } = await params;
-  const story = getStory(code.toUpperCase());
+  const story = await getStory(code.toUpperCase());
 
   if (!story) {
     redirect("/");

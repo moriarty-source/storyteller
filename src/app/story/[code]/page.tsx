@@ -10,7 +10,7 @@ interface PageProps {
 export default async function StoryPage({ params }: PageProps) {
   const { code } = await params;
 
-  const story = getStory(code);
+  const story = await getStory(code);
 
   if (!story) {
     redirect("/");
@@ -20,7 +20,7 @@ export default async function StoryPage({ params }: PageProps) {
     redirect(`/story/${code}/read`);
   }
 
-  const wordLimits = getWordLimits();
+  const wordLimits = await getWordLimits();
 
   return <StoryEditor story={story} wordLimits={wordLimits} />;
 }

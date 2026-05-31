@@ -1,48 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateStory, deleteStory } from "@/lib/stories";
-import { checkAdminAuth } from "@/lib/adminAuth";
-import type { Story } from "@/types/story";
+import { updateStory } from "@/lib/stories";
+import { getAdminPassword } from "@/lib/config";
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
-) {
-  if (!checkAdminAuth(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const { code } = await params;
-  const body = (await request.json()) as Partial<
-    Pick<Story, "character" | "world" | "inventory" | "stations" | "status">
-  >;
-
-  const updated = updateStory(code, {
-    character: body.character,
-    world: body.world,
-    inventory: body.inventory,
-    stations: body.stations,
-    status: body.status,
-  });
-
-  if (!updated) {
-    return NextResponse.json({ error: "Story not found" }, { status: 404 });
-  }
-  return NextResponse.json(updated);
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const pw = req.headers.get("x-admin-password");
+  const expected = await getAdminPassword();
+  return pw === expected;
 }
 
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Promise<{ code: string }> }
-) {
-  if (!checkAdminAuth(request)) {
+export async function PATCH(req: NextRequest, { params }: { params: Promise<{ code: string }> }) {
+  if (!await isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-
+  
   const { code } = await params;
-  const deleted = deleteStory(code);
-
-  if (!deleted) {
-    return NextResponse.json({ error: "Story not found" }, { status: 404 });
+  const story = await updateStory(code.toUpperCase(), { status: "completed" });
+  
+  if (!story) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
-  return NextResponse.json({ success: true });
+  
+  return NextResponse.json(story);
 }

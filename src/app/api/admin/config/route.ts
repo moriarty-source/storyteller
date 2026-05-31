@@ -1,21 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getWordLimits, setWordLimits } from "@/lib/config";
-import { checkAdminAuth } from "@/lib/adminAuth";
-import type { WordLimits } from "@/types/story";
+import { getWordLimits, setWordLimits, getAdminPassword } from "@/lib/config";
 
-export async function GET(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  const wordLimits = getWordLimits();
-  return NextResponse.json({ wordLimits });
+async function isAuthorized(req: NextRequest): Promise<boolean> {
+  const pw = req.headers.get("x-admin-password");
+  const expected = await getAdminPassword();
+  return pw === expected;
 }
 
-export async function PUT(request: NextRequest) {
-  if (!checkAdminAuth(request)) {
+export async function GET(req: NextRequest) {
+  if (!await isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const body = (await request.json()) as { wordLimits: WordLimits };
-  setWordLimits(body.wordLimits);
-  return NextResponse.json({ wordLimits: body.wordLimits });
+  const limits = await getWordLimits();
+  return NextResponse.json(limits);
+}
+
+export async function PATCH(req: NextRequest) {
+  if (!await isAuthorized(req)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  const body = await req.json();
+  await setWordLimits(body);
+  const limits = await getWordLimits();
+  return NextResponse.json(limits);
 }
