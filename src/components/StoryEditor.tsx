@@ -246,6 +246,17 @@ export default function StoryEditor({ story: initialStory, wordLimits }: StoryEd
                 wordLimit={getWordLimit(wordLimits, currentStation)}
                 consequenceLimit={wordLimits.consequence}
                 onStationChange={handleStationChange}
+                previousStationText={
+                  currentStation > 1
+                    ? stations.find((s) => s.id === currentStation - 1)?.text
+                    : undefined
+                }
+                previousStationTitle={
+                  currentStation > 1
+                    ? STATIONS.find((m) => m.id === currentStation - 1)?.title
+                    : undefined
+                }
+                onAddInventoryItem={handleAddInventoryItem}
               />
 
               {/* Navigation buttons */}
@@ -281,19 +292,26 @@ export default function StoryEditor({ story: initialStory, wordLimits }: StoryEd
                   <button
                     type="button"
                     onClick={async () => {
-                      // Mark station 6 completed and save
+                      // Mark station 6 completed and save stations
                       const newStations = stations.map((s) =>
                         s.id === 6 ? { ...s, completed: true } : s
                       );
                       setStations(newStations);
                       if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
                       await saveStory(character, world, newStations, inventory);
-                      // Mark story as completed
-                      await fetch(`/api/stories/${storyCode}`, {
+                      // Mark story as completed — single combined update to avoid race
+                      const res = await fetch(`/api/stories/${storyCode}`, {
                         method: "PUT",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ status: "completed" }),
+                        body: JSON.stringify({
+                          status: "completed",
+                          stations: newStations,
+                        }),
                       });
+                      if (!res.ok) {
+                        setSaveStatus("error");
+                        return;
+                      }
                       window.location.href = `/story/${storyCode}/view`;
                     }}
                     className={[
