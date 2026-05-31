@@ -17,7 +17,7 @@ export default async function StoryPage({ params }: PageProps) {
   }
 
   if (story.status === "completed") {
-    redirect(`/story/${code}/view`);
+    redirect(`/story/${code}/read`);
   }
 
   const wordLimits = getWordLimits();
