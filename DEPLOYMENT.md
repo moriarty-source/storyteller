@@ -1,10 +1,79 @@
 # Storyteller - Deployment & Session State
 
-## 🚀 Live Deployment
+## 🚀 Deployment-Optionen
 
-**Production URL:** https://storyteller-app-cyan.vercel.app
+### ⚠️ WICHTIG: Vercel Serverless Limitation
 
-**GitHub Repository:** https://github.com/moriarty-source/storyteller
+**Aktuelles Problem:** SQLite funktioniert NICHT auf Vercel Serverless!
+- Die `data/stories.db` Datei wird bei jedem Build gelöscht
+- API-Aufrufe scheitern mit "Failed to create story"
+
+### Empfohlene Lösungen
+
+#### Option 1: Lokaler Server (Vorgesehen im Workshop-Konzept)
+**Für:** Raspberry Pi / Lokales Netzwerk im Kulturkino
+
+```bash
+# Auf Raspberry Pi oder lokalem Server
+npm install
+npm run build
+npm start
+
+# Zugriff im lokalen Netzwerk:
+# http://192.168.x.xxx:3000
+```
+
+**Vorteile:**
+- ✅ SQLite persistiert lokal
+- ✅ Kein Internet nötig
+- ✅ Schnell im lokalen WLAN
+- ✅ Entspricht dem ursprünglichen Konzept
+
+#### Option 2: Vercel mit PostgreSQL
+**Für:** Cloud-Hosting mit persistenter Datenbank
+
+1. Neon Postgres einrichten (kostenlos): https://neon.tech
+2. DATABASE_URL in Vercel Environment Variables setzen
+3. Code auf Prisma/PostgreSQL umstellen
+
+**Aufwand:** Mittel (Code-Änderungen nötig)
+
+#### Option 3: Vercel Blob Storage + SQLite
+**Für:** Experimentell, nicht produktionsreif
+
+---
+
+## 🏠 Aktuelle Empfehlung für Workshop
+
+**Für den 3-Stunden-Workshop im Kulturkino:**
+
+1. **Raspberry Pi oder Laptop als Server**
+2. **Lokales WLAN-Netzwerk**
+3. **SQLite bleibt unverändert**
+
+### Deployment auf lokalem Server:
+
+```bash
+# 1. Repository klonen
+git clone https://github.com/moriarty-source/storyteller.git
+cd storyteller
+
+# 2. Installation
+npm install
+
+# 3. Build
+npm run build
+
+# 4. Starten
+npm start
+
+# 5. IP-Adresse herausfinden
+ipconfig  # Windows
+ifconfig  # Mac/Linux
+
+# 6. Auf iPads eingeben:
+# http://[IP-ADRESSE]:3000
+```
 
 ---
 
