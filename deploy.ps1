@@ -20,15 +20,22 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 # 2. Upload to Pi
-Write-Host "[2/3] Uploading to Pi..." -ForegroundColor Yellow
+Write-Host "[2/4] Uploading to Pi..." -ForegroundColor Yellow
 scp -i $SshKey storyteller.bundle "pi@${PiIp}:/home/pi/"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Upload failed" -ForegroundColor Red
     exit 1
 }
 
+# 2b. Upload systemd service file
+scp -i $SshKey storyteller.service "pi@${PiIp}:/home/pi/"
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] Service file upload failed" -ForegroundColor Red
+    exit 1
+}
+
 # 3. Build on Pi
-Write-Host "[3/3] Building on Pi..." -ForegroundColor Yellow
+Write-Host "[3/4] Building on Pi..." -ForegroundColor Yellow
 ssh -i $SshKey "pi@${PiIp}" @"
     set -e
     rm -rf ~/storyteller
@@ -43,8 +50,24 @@ if ($LASTEXITCODE -ne 0) {
     exit 1
 }
 
+# 4. Install systemd service
+Write-Host "[4/4] Installing systemd service..." -ForegroundColor Yellow
+ssh -i $SshKey "pi@${PiIp}" @"
+    sudo mv ~/storyteller.service /etc/systemd/system/
+    sudo systemctl daemon-reload
+    sudo systemctl enable storyteller
+    sudo systemctl restart storyteller
+    echo 'Service installed and started'
+"@
+
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "[ERROR] Service installation failed" -ForegroundColor Red
+    exit 1
+}
+
 Write-Host "`n[OK] Deployment successful!" -ForegroundColor Green
 Write-Host "App running at http://${PiIp}:3000" -ForegroundColor Cyan
-Write-Host "`nTo start the app on Pi, run:" -ForegroundColor Yellow
+Write-Host "`nService commands:" -ForegroundColor Yellow
 Write-Host "ssh -i $SshKey pi@$PiIp" -ForegroundColor White
-Write-Host "cd ~/storyteller && npm start" -ForegroundColor White
+Write-Host "sudo systemctl status storyteller" -ForegroundColor White
+Write-Host "sudo journalctl -u storyteller -f" -ForegroundColor White
