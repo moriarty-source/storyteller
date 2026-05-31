@@ -55,14 +55,16 @@ function toRoman(n: number): string {
   return map[n] ?? String(n);
 }
 
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const TOTAL_STATIONS = 6;
+
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function StoryReader({ story }: StoryReaderProps) {
   const [phase, setPhase] = useState<Phase>({ kind: "cover" });
   const inkRef = useRef<InkStory | null>(null);
   const choicesMadeRef = useRef<ChoiceMade[]>([]);
-
-  const TOTAL_STATIONS = 6;
 
   function advance(prevChoiceLabel: string | null) {
     const inkStory = inkRef.current!;
@@ -82,8 +84,13 @@ export default function StoryReader({ story }: StoryReaderProps) {
       mainTextParagraphs = paragraphs;
     }
 
-    if (choices.length === 0 && !inkStory.canContinue) {
-      // Reached END — go straight to summary
+    if (consequence && !consequence.text.trim()) {
+      mainTextParagraphs = [consequence.text, ...mainTextParagraphs].filter(t => t.trim());
+      consequence = undefined;
+    }
+
+    if (choices.length === 0 && !inkStory.canContinue && mainTextParagraphs.length === 0 && !consequence) {
+      // Reached END with nothing to display — go straight to summary
       setPhase({ kind: "summary", choicesMade: choicesMadeRef.current });
       return;
     }
@@ -112,8 +119,9 @@ export default function StoryReader({ story }: StoryReaderProps) {
   }
 
   function handleChoice(index: number, label: string) {
+    if (phase.kind !== "reading") return;
     const inkStory = inkRef.current!;
-    const page = (phase as { kind: "reading"; page: ReaderPage }).page;
+    const page = phase.page;
 
     choicesMadeRef.current = [
       ...choicesMadeRef.current,
