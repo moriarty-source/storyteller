@@ -55,7 +55,7 @@ After=network.target
 Type=simple
 User=pi
 WorkingDirectory=/home/pi/storyteller
-Environment="PATH=$npmDir:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+Environment="PATH=$($npmDir):/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 ExecStart=$npmPath start
 Restart=always
 RestartSec=10
