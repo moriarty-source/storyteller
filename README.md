@@ -2,13 +2,21 @@
 
 Ein browserbasiertes Tool für Schreibworkshops (Klassen 6-7), mit dem Schüler interaktive Geschichten erstellen können.
 
-**Live:** https://storyteller-app-cyan.vercel.app
+## 🚀 Deployments
+
+| Plattform | URL | Best für |
+|-----------|-----|----------|
+| **Vercel (Cloud)** | https://storyteller-app-cyan.vercel.app | Online Workshops, Multi-Geräte |
+| **Raspberry Pi (Lokal)** | http://192.168.178.70:3000 | Schulnetzwerk, Offline, Datenschutz |
 
 ---
 
-## 🚀 Quick Start
+## 📱 Schnelleinstieg
 
-### Für Workshop-Leiter (Raspberry Pi / Lokaler Server)
+### Variante 1: Cloud (Vercel)
+Einfach auf https://storyteller-app-cyan.vercel.app zugreifen — keine Installation nötig!
+
+### Variante 2: Lokal (Raspberry Pi / Windows / Mac)
 
 ```bash
 # 1. Repository klonen
@@ -24,21 +32,20 @@ npm run build
 # 4. Server starten
 npm start
 
-# 5. IP-Adresse herausfinden
+# 5. Lokale IP-Adresse herausfinden
 ipconfig  # Windows (nach IPv4 suchen)
 ifconfig  # Mac/Linux
 
-# 6. Auf iPads: http://[IP-ADRESSE]:3000
+# 6. Auf Schüler-Geräten öffnen
+# http://[DEINE-IP]:3000
+# Beispiel: http://192.168.178.70:3000
 ```
 
-### Vercel Cloud Deployment
-
-Die Anwendung ist bereits auf Vercel deployed. Für eigene Instanz:
-
-1. Repository forken
-2. Auf Vercel importieren
-3. PostgreSQL Database hinzufügen (Storage → Add Database → PostgreSQL → Neon)
-4. Fertig!
+**Für Vercel-Deployment deiner eigenen Instanz:**
+1. Repository forken zu deinem GitHub
+2. Auf Vercel importieren (https://vercel.com/new)
+3. Deploy-Button klicken — fertig!
+   (Keine externe Datenbank nötig, SQLite wird lokal/automatisch konfiguriert)
 
 ---
 
@@ -69,10 +76,10 @@ Die Anwendung ist bereits auf Vercel deployed. Für eigene Instanz:
 | Framework | Next.js 16 (App Router, Turbopack) |
 | Sprache | TypeScript |
 | Styling | Tailwind CSS 4 |
-| Datenbank | Vercel PostgreSQL (via @vercel/postgres) |
+| Datenbank | SQLite (via better-sqlite3) |
 | Story-Engine | inkjs 2.4 |
 | PDF-Export | @react-pdf/renderer |
-| Hosting | Vercel |
+| Hosting | Vercel + Raspberry Pi |
 
 ---
 
@@ -95,9 +102,9 @@ src/
 │   ├── StationEditor.tsx  # Stations 1-6
 │   └── ...
 ├── lib/                   # Utilities
-│   ├── db.ts             # PostgreSQL connection
-│   ├── stories.ts        # Story CRUD
-│   ├── config.ts         # Config management
+│   ├── db.ts             # SQLite connection
+│   ├── stories.ts        # Story CRUD (synchronous)
+│   ├── config.ts         # Config management (synchronous)
 │   └── inkCompiler.ts    # Story → Ink compiler
 └── types/                # TypeScript types
     └── story.ts
@@ -125,26 +132,28 @@ npm test
 npm run lint
 ```
 
-### Environment Variables (für Vercel)
+### Environment Variables
 
-Wird automatisch von Vercel gesetzt bei PostgreSQL-Integration:
-- `DATABASE_URL` - PostgreSQL connection string
+**Optional (standardmäßig nicht nötig):**
+- `DB_PATH` - SQLite Dateipfad (Standard: `data/stories.db`)
+
+Die Anwendung funktioniert **sofort ohne weitere Konfiguration** — SQLite wird lokal initialisiert.
 
 ---
 
-## 📊 Datenbank-Schema
+## 📊 Datenbank-Schema (SQLite)
 
 ### stories table
 ```sql
 CREATE TABLE stories (
   code TEXT PRIMARY KEY,
   status TEXT DEFAULT 'active',  -- 'active' or 'completed'
-  character JSONB DEFAULT '{}',
-  world JSONB DEFAULT '{}',
-  inventory JSONB DEFAULT '[]',
-  stations JSONB DEFAULT '[]',
-  created_at TIMESTAMP DEFAULT NOW(),
-  updated_at TIMESTAMP DEFAULT NOW()
+  character TEXT DEFAULT '{}',    -- JSON string
+  world TEXT DEFAULT '{}',        -- JSON string
+  inventory TEXT DEFAULT '[]',    -- JSON string
+  stations TEXT DEFAULT '[]',     -- JSON string
+  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
 )
 ```
 
@@ -152,9 +161,13 @@ CREATE TABLE stories (
 ```sql
 CREATE TABLE config (
   key TEXT PRIMARY KEY,
-  value JSONB NOT NULL
+  value TEXT NOT NULL              -- JSON string
 )
 ```
+
+**Standard-Konfiguration:**
+- `wordLimits`: Word-Limits pro Station (station1-6, consequence)
+- `adminPassword`: Admin-Passwort für Story-Verwaltung
 
 ---
 
@@ -180,19 +193,25 @@ CREATE TABLE config (
 
 ## 🐛 Troubleshooting
 
-### "Database unavailable"
-- Vercel: PostgreSQL im Dashboard hinzufügen
-- Lokal: DATABASE_URL in .env.local setzen
-
 ### "Port 3000 already in use"
 ```bash
 PORT=3001 npm start
 ```
 
-### iPads können nicht verbinden
+### iPads/Schüler-Geräte können nicht verbinden
 - Firewall: Port 3000 freigeben
-- Gleiches WLAN-Netzwerk prüfen
-- Test: `curl http://localhost:3000`
+- Gleiches WLAN-Netzwerk: Router-Einstellungen prüfen
+- Test vom Workshop-Rechner: `curl http://localhost:3000`
+- Test von anderem Gerät: `curl http://[SERVER-IP]:3000`
+
+### Stories verlieren beim Neustart (Pi)
+- **Gelöst durch systemd Service** (siehe DEPLOYMENT.md)
+- Manueller Start: `npm start` speichert in `data/stories.db`
+- Sicherung: Kopiere `data/stories.db` vor Neuinstallation
+
+### Ink-Compiler-Fehler
+- Story-Status muss `"completed"` sein, bevor Reader laden kann
+- Überprüfe: Admin-Panel → Story als "abgeschlossen" markieren
 
 ---
 
@@ -208,5 +227,5 @@ PORT=3001 npm start
 MIT License - frei für Bildungszwecke nutzbar
 
 **Erstellt:** 2026-05-31  
-**Letztes Update:** 2026-05-31  
+**Letztes Update:** 2026-05-31 (Dual Deployment: Vercel + Raspberry Pi)  
 **Status:** ✅ Production Ready
