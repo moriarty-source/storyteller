@@ -1,7 +1,7 @@
 import type { Story, Station } from "@/types/story";
 
 /**
- * Converts a Story object into valid Ink markup for playback via inkjs.
+ * Converts a Story object into valid Ink markup for playable via inkjs.
  *
  * Structure:
  *   [VAR declarations]
@@ -15,7 +15,11 @@ import type { Story, Station } from "@/types/story";
  *     consequence text
  *   - -> station_N+1   (or -> END for the last station)
  */
-export function compileToInk(story: Story): string {
+export function compileToInk(
+  story: Story,
+  options: { forReader?: boolean } = {}
+): string {
+  const forReader = options.forReader ?? false;
   const lines: string[] = [];
 
   // ── 1. Top-level VAR declarations ──────────────────────────────────────────
@@ -38,18 +42,21 @@ export function compileToInk(story: Story): string {
 
   // ── 2. Intro knot ──────────────────────────────────────────────────────────
 
-  lines.push("=== intro ===");
-  lines.push(
-    `In einer Welt: {character_name} ist ${story.character.strength} und kämpft gegen ${escapeInkString(story.character.weakness)}.`
-  );
-  lines.push(`Welt: ${escapeInkString(story.world.description)}`);
-  lines.push(`Problem: ${escapeInkString(story.world.problem)}`);
-  lines.push(`Ziel: {character_goal}`);
-
   // Filter to stations that have content (non-empty text OR choices)
   const activeStations = story.stations.filter(
     (s) => s.text.trim().length > 0 || s.choices.length > 0
   );
+
+  lines.push("=== intro ===");
+
+  if (!forReader) {
+    lines.push(
+      `In einer Welt: {character_name} ist ${story.character.strength} und kämpft gegen ${escapeInkString(story.character.weakness)}.`
+    );
+    lines.push(`Welt: ${escapeInkString(story.world.description)}`);
+    lines.push(`Problem: ${escapeInkString(story.world.problem)}`);
+    lines.push(`Ziel: {character_goal}`);
+  }
 
   if (activeStations.length > 0) {
     lines.push(`-> station_${activeStations[0].id}`);

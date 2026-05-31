@@ -226,3 +226,36 @@ describe("compileToInk", () => {
     expect(varIdx).toBeLessThan(introIdx);
   });
 });
+
+describe("compileToInk with forReader option", () => {
+  it("omits intro narrative text when forReader is true", () => {
+    const story = makeStory();
+    const ink = compileToInk(story, { forReader: true });
+    expect(ink).toContain("=== intro ===");
+    expect(ink).not.toContain("In einer Welt:");
+    expect(ink).not.toContain("Welt:");
+    expect(ink).not.toContain("Problem:");
+    expect(ink).not.toContain("Ziel:");
+    expect(ink).toContain("-> station_1");
+  });
+
+  it("still includes all station text and choices when forReader is true", () => {
+    const story = makeStory({
+      stations: [makeStation(1), makeStation(2)],
+    });
+    const ink = compileToInk(story, { forReader: true });
+    expect(ink).toContain("=== station_1 ===");
+    expect(ink).toContain("Station 1 Text");
+    expect(ink).toContain("* [Wahl A]");
+    expect(ink).toContain("Konsequenz A");
+    expect(ink).toContain("-> station_2");
+  });
+
+  it("does not affect output when forReader is false (default behaviour)", () => {
+    const story = makeStory();
+    const inkDefault = compileToInk(story);
+    const inkExplicitFalse = compileToInk(story, { forReader: false });
+    expect(inkDefault).toBe(inkExplicitFalse);
+    expect(inkDefault).toContain("In einer Welt:");
+  });
+});
