@@ -191,13 +191,18 @@ export default function StoryEditor({ story: initialStory, wordLimits }: StoryEd
           </h1>
         </div>
 
-        <span
-          className="font-mono text-xl font-extrabold tracking-widest"
-          style={{ color: "var(--color-amber)" }}
-          aria-label={`Story-Code: ${storyCode}`}
-        >
-          {storyCode}
-        </span>
+        <div className="flex flex-col items-end">
+          <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 leading-none mb-0.5">
+            Dein persönlicher Story-Code
+          </span>
+          <span
+            className="font-mono text-xl font-extrabold tracking-widest leading-none"
+            style={{ color: "var(--color-amber)" }}
+            aria-label={`Story-Code: ${storyCode}`}
+          >
+            {storyCode}
+          </span>
+        </div>
 
         <SaveIndicator status={saveStatus} />
       </header>

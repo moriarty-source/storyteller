@@ -153,12 +153,17 @@ export default function StoryReader({ story }: StoryReaderProps) {
           >
             Story Maker
           </span>
-          <span
-            className="font-mono text-lg font-extrabold tracking-widest"
-            style={{ color: "var(--color-amber)" }}
-          >
-            {story.code}
-          </span>
+          <div className="flex flex-col items-end">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 leading-none mb-0.5">
+              Dein persönlicher Story-Code
+            </span>
+            <span
+              className="font-mono text-lg font-extrabold tracking-widest leading-none"
+              style={{ color: "var(--color-amber)" }}
+            >
+              {story.code}
+            </span>
+          </div>
         </div>
 
         {/* Progress dots */}
