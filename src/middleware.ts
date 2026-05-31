@@ -1,24 +1,10 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { initDatabase } from "@/lib/db";
 
-let dbInitialized = false;
+// Note: Database initialization is handled lazily in each API route
+// Middleware cannot be async, so we just pass requests through
 
-export async function middleware(request: NextRequest) {
-  // Initialize database on first request
-  if (!dbInitialized) {
-    try {
-      await initDatabase();
-      dbInitialized = true;
-    } catch (error) {
-      console.error("Database initialization failed:", error);
-      return NextResponse.json(
-        { error: "Database unavailable" },
-        { status: 503 }
-      );
-    }
-  }
-  
+export function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
