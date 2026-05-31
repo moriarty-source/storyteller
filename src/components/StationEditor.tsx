@@ -10,14 +10,20 @@ import {
 import WordCounter from "@/components/WordCounter";
 import ChoiceCard from "@/components/ChoiceCard";
 
+export interface PreviousStationEntry {
+  id: number;
+  title: string;
+  text: string;
+  choices: Choice[];
+}
+
 interface StationEditorProps {
   station: Station;
   meta: StationMeta;
   wordLimit: number;
   consequenceLimit: number;
   onStationChange: (station: Station) => void;
-  previousStationText?: string;     // text from the station before this one
-  previousStationTitle?: string;
+  previousStations?: PreviousStationEntry[];
   onAddInventoryItem?: (item: string) => void;
 }
 
@@ -134,12 +140,11 @@ export default function StationEditor({
   wordLimit,
   consequenceLimit,
   onStationChange,
-  previousStationText,
-  previousStationTitle,
+  previousStations = [],
   onAddInventoryItem,
 }: StationEditorProps) {
   const [hintExpanded, setHintExpanded] = useState(false);
-  const [previousExpanded, setPreviousExpanded] = useState(false);
+  const [storyExpanded, setStoryExpanded] = useState(false);
 
   const wordCount = countWords(station.text);
   const showWordHint = shouldShowHint(station.text, wordLimit);
@@ -170,25 +175,58 @@ export default function StationEditor({
   return (
     <div className="mx-auto w-full max-w-2xl px-4 py-8 space-y-6" style={{ color: "var(--color-text)" }}>
 
-      {/* ── Previous station context ── */}
-      {previousStationText && (
+      {/* ── Story so far ── */}
+      {previousStations.length > 0 && (
         <div className="rounded-xl border border-gray-200 overflow-hidden">
           <button
             type="button"
-            onClick={() => setPreviousExpanded((v) => !v)}
-            className="flex w-full items-center justify-between px-4 py-2.5 text-left transition-colors hover:bg-gray-50"
+            onClick={() => setStoryExpanded((v) => !v)}
+            className="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50"
             style={{ background: "var(--color-bg-muted)" }}
           >
-            <span className="text-xs font-semibold text-gray-500">
-              ← {previousStationTitle ?? "Vorherige Station"} (zur Erinnerung)
+            <span className="text-sm font-semibold" style={{ color: "var(--color-indigo)" }}>
+              📖 Bisherige Geschichte lesen
             </span>
-            <span className="text-xs text-gray-400">{previousExpanded ? "▲" : "▼"}</span>
+            <span className="text-xs text-gray-400">{storyExpanded ? "▲ zuklappen" : "▼ aufklappen"}</span>
           </button>
-          {previousExpanded && (
-            <div className="px-4 py-3 border-t border-gray-200">
-              <p className="text-sm leading-relaxed text-gray-500 whitespace-pre-wrap">
-                {previousStationText}
-              </p>
+
+          {storyExpanded && (
+            <div className="divide-y divide-gray-100 border-t border-gray-200 max-h-[60vh] overflow-y-auto">
+              {previousStations.map((prev) => (
+                <div key={prev.id} className="px-4 py-4 space-y-3">
+                  {/* Station heading */}
+                  <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
+                    Station {prev.id} — {prev.title}
+                  </p>
+
+                  {/* Main text */}
+                  {prev.text && (
+                    <p className="text-sm leading-relaxed text-gray-700 whitespace-pre-wrap">
+                      {prev.text}
+                    </p>
+                  )}
+
+                  {/* Choices + consequences */}
+                  {prev.choices.length > 0 && (
+                    <div className="space-y-2 pl-3 border-l-2" style={{ borderColor: "var(--color-amber)" }}>
+                      {prev.choices.map((c, i) => (
+                        <div key={i} className="space-y-1">
+                          {c.label && (
+                            <p className="text-xs font-semibold" style={{ color: "#92400E" }}>
+                              ▸ {c.label}
+                            </p>
+                          )}
+                          {c.consequence && (
+                            <p className="text-xs text-gray-500 leading-relaxed pl-3">
+                              {c.consequence}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </div>

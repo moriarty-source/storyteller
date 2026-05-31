@@ -4,7 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import type { Story, Character, World, Station, WordLimits } from "@/types/story";
 import { STATIONS } from "@/types/story";
 import CharacterSheet from "@/components/CharacterSheet";
-import StationEditor from "@/components/StationEditor";
+import StationEditor, { type PreviousStationEntry } from "@/components/StationEditor";
 import CharacterCard from "@/components/CharacterCard";
 import InventoryPanel from "@/components/InventoryPanel";
 import StationProgress from "@/components/StationProgress";
@@ -246,15 +246,15 @@ export default function StoryEditor({ story: initialStory, wordLimits }: StoryEd
                 wordLimit={getWordLimit(wordLimits, currentStation)}
                 consequenceLimit={wordLimits.consequence}
                 onStationChange={handleStationChange}
-                previousStationText={
-                  currentStation > 1
-                    ? stations.find((s) => s.id === currentStation - 1)?.text
-                    : undefined
-                }
-                previousStationTitle={
-                  currentStation > 1
-                    ? STATIONS.find((m) => m.id === currentStation - 1)?.title
-                    : undefined
+                previousStations={
+                  stations
+                    .filter((s) => s.id < currentStation)
+                    .map((s): PreviousStationEntry => ({
+                      id: s.id,
+                      title: STATIONS.find((m) => m.id === s.id)?.title ?? `Station ${s.id}`,
+                      text: s.text,
+                      choices: s.choices,
+                    }))
                 }
                 onAddInventoryItem={handleAddInventoryItem}
               />
