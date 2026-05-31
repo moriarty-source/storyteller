@@ -49,6 +49,7 @@ export function compileToInk(
 
   lines.push("=== intro ===");
 
+  // For reader mode, skip intro narrative text (shown in Cover UI instead)
   if (!forReader) {
     lines.push(
       `In einer Welt: {character_name} ist ${story.character.strength} und kämpft gegen ${escapeInkString(story.character.weakness)}.`
@@ -64,12 +65,12 @@ export function compileToInk(
     lines.push("-> END");
   }
 
-  // ── 3. Station knots ───────────────────────────────────────────────────────
+  // ── 3. Station knots — ONLY for active stations ────────────────────────────
 
-  for (let i = 0; i < story.stations.length; i++) {
-    const station = story.stations[i];
-    const isLast = i === story.stations.length - 1;
-    const nextStation = isLast ? null : story.stations[i + 1];
+  for (let i = 0; i < activeStations.length; i++) {
+    const station = activeStations[i];
+    const isLast = i === activeStations.length - 1;
+    const nextStation = isLast ? null : activeStations[i + 1];
 
     lines.push("");
     lines.push(`=== station_${station.id} ===`);
