@@ -1,26 +1,23 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getWordLimits, setWordLimits, getAdminPassword } from "@/lib/config";
 
-async function isAuthorized(req: NextRequest): Promise<boolean> {
+function isAuthorized(req: NextRequest): boolean {
   const pw = req.headers.get("x-admin-password");
-  const expected = await getAdminPassword();
-  return pw === expected;
+  return pw === getAdminPassword();
 }
 
 export async function GET(req: NextRequest) {
-  if (!await isAuthorized(req)) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const limits = await getWordLimits();
-  return NextResponse.json(limits);
+  return NextResponse.json(getWordLimits());
 }
 
 export async function PATCH(req: NextRequest) {
-  if (!await isAuthorized(req)) {
+  if (!isAuthorized(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = await req.json();
-  await setWordLimits(body);
-  const limits = await getWordLimits();
-  return NextResponse.json(limits);
+  setWordLimits(body);
+  return NextResponse.json(getWordLimits());
 }

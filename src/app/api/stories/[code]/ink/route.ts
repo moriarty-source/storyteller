@@ -10,7 +10,7 @@ interface RouteContext {
 
 export async function GET(_req: NextRequest, { params }: RouteContext) {
   const { code } = await params;
-  const story = await getStory(code.toUpperCase());
+  const story = getStory(code.toUpperCase());
 
   if (!story) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
