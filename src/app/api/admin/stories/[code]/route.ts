@@ -6,17 +6,17 @@ interface RouteContext {
   params: Promise<{ code: string }>;
 }
 
-function isAuthorized(req: NextRequest): boolean {
+async function isAuthorized(req: NextRequest): Promise<boolean> {
   const pw = req.headers.get("x-admin-password");
-  return pw === getAdminPassword();
+  return pw === (await getAdminPassword());
 }
 
 export async function PATCH(req: NextRequest, { params }: RouteContext) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { code } = await params;
-  const story = updateStory(code.toUpperCase(), { status: "completed" });
+  const story = await updateStory(code.toUpperCase(), { status: "completed" });
   if (!story) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
@@ -24,11 +24,11 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
 }
 
 export async function DELETE(req: NextRequest, { params }: RouteContext) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const { code } = await params;
-  const deleted = deleteStory(code.toUpperCase());
+  const deleted = await deleteStory(code.toUpperCase());
   if (!deleted) {
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }

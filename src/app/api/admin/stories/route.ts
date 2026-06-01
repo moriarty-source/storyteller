@@ -2,15 +2,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { listStories } from "@/lib/stories";
 import { getAdminPassword } from "@/lib/config";
 
-function isAuthorized(req: NextRequest): boolean {
+async function isAuthorized(req: NextRequest): Promise<boolean> {
   const pw = req.headers.get("x-admin-password");
-  return pw === getAdminPassword();
+  return pw === (await getAdminPassword());
 }
 
 export async function GET(req: NextRequest) {
-  if (!isAuthorized(req)) {
+  if (!(await isAuthorized(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const stories = listStories();
+  const stories = await listStories();
   return NextResponse.json(stories);
 }

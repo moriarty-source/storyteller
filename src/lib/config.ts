@@ -1,35 +1,22 @@
-import { getDb } from "@/lib/db";
+/**
+ * Config CRUD — thin async wrappers over the active DbAdapter.
+ */
+
+import { getAdapter } from "@/lib/db-adapter";
 import type { WordLimits } from "@/types/story";
-import { DEFAULT_WORD_LIMITS } from "@/types/story";
 
-export function getWordLimits(): WordLimits {
-  const db = getDb();
-  const row = db
-    .prepare("SELECT value FROM config WHERE key = 'wordLimits'")
-    .get() as { value: string } | undefined;
-  if (!row) return DEFAULT_WORD_LIMITS;
-  return JSON.parse(row.value) as WordLimits;
+export async function getWordLimits(): Promise<WordLimits> {
+  return getAdapter().getWordLimits();
 }
 
-export function setWordLimits(limits: WordLimits): void {
-  const db = getDb();
-  db.prepare(
-    "INSERT INTO config (key, value) VALUES ('wordLimits', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
-  ).run(JSON.stringify(limits));
+export async function setWordLimits(limits: WordLimits): Promise<void> {
+  return getAdapter().setWordLimits(limits);
 }
 
-export function getAdminPassword(): string {
-  const db = getDb();
-  const row = db
-    .prepare("SELECT value FROM config WHERE key = 'adminPassword'")
-    .get() as { value: string } | undefined;
-  if (!row) return "admin";
-  return JSON.parse(row.value) as string;
+export async function getAdminPassword(): Promise<string> {
+  return getAdapter().getAdminPassword();
 }
 
-export function setAdminPassword(password: string): void {
-  const db = getDb();
-  db.prepare(
-    "INSERT INTO config (key, value) VALUES ('adminPassword', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
-  ).run(JSON.stringify(password));
+export async function setAdminPassword(password: string): Promise<void> {
+  return getAdapter().setAdminPassword(password);
 }

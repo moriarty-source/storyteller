@@ -1,131 +1,38 @@
-import { getDb } from "@/lib/db";
-import type { Story, StoryStatus, Character, World, Station } from "@/types/story";
-import { STATIONS } from "@/types/story";
+/**
+ * Story CRUD — thin async wrappers over the active DbAdapter.
+ * The adapter is selected automatically:
+ *   POSTGRES_URL set  → Neon/Postgres
+ *   POSTGRES_URL unset → SQLite (Pi, local)
+ */
 
-// ── Defaults ──────────────────────────────────────────────────────────────────
+import { getAdapter } from "@/lib/db-adapter";
+import type { Story } from "@/types/story";
 
-const DEFAULT_CHARACTER: Character = {
-  name: "",
-  strength: "Mutig",
-  weakness: "",
-  goal: "",
-};
-
-const DEFAULT_WORLD: World = {
-  description: "",
-  problem: "",
-};
-
-const DEFAULT_STATIONS: Station[] = STATIONS.map((s) => ({
-  id: s.id,
-  text: "",
-  choices: [],
-  completed: false,
-}));
-
-// ── Row → Story ───────────────────────────────────────────────────────────────
-
-function parseRow(row: Record<string, unknown>): Story {
-  return {
-    code: row.code as string,
-    status: row.status as StoryStatus,
-    character: JSON.parse(row.character as string) as Character,
-    world: JSON.parse(row.world as string) as World,
-    inventory: JSON.parse(row.inventory as string) as string[],
-    stations: JSON.parse(row.stations as string) as Station[],
-    createdAt: row.created_at as string,
-    updatedAt: row.updated_at as string,
-  };
+export async function createStory(code: string): Promise<Story> {
+  return getAdapter().createStory(code);
 }
 
-// ── CRUD ─────────────────────────────────────────────────────────────────────
-
-export function createStory(code: string): Story {
-  const db = getDb();
-  const now = new Date().toISOString();
-  db.prepare(
-    `INSERT INTO stories (code, status, character, world, inventory, stations, created_at, updated_at)
-     VALUES (?, 'active', ?, ?, '[]', ?, ?, ?)`
-  ).run(
-    code,
-    JSON.stringify(DEFAULT_CHARACTER),
-    JSON.stringify(DEFAULT_WORLD),
-    JSON.stringify(DEFAULT_STATIONS),
-    now,
-    now
-  );
-  return getStory(code)!;
+export async function getStory(code: string): Promise<Story | null> {
+  return getAdapter().getStory(code);
 }
 
-export function getStory(code: string): Story | null {
-  const db = getDb();
-  const row = db
-    .prepare("SELECT * FROM stories WHERE code = ?")
-    .get(code) as Record<string, unknown> | undefined;
-  return row ? parseRow(row) : null;
-}
-
-export function updateStory(
+export async function updateStory(
   code: string,
   updates: Partial<
     Pick<Story, "character" | "world" | "inventory" | "stations" | "status">
   >
-): Story | null {
-  const db = getDb();
-  const parts: string[] = [];
-  const values: unknown[] = [];
-
-  if (updates.status !== undefined) {
-    parts.push("status = ?");
-    values.push(updates.status);
-  }
-  if (updates.character !== undefined) {
-    parts.push("character = ?");
-    values.push(JSON.stringify(updates.character));
-  }
-  if (updates.world !== undefined) {
-    parts.push("world = ?");
-    values.push(JSON.stringify(updates.world));
-  }
-  if (updates.inventory !== undefined) {
-    parts.push("inventory = ?");
-    values.push(JSON.stringify(updates.inventory));
-  }
-  if (updates.stations !== undefined) {
-    parts.push("stations = ?");
-    values.push(JSON.stringify(updates.stations));
-  }
-
-  if (parts.length === 0) return getStory(code);
-
-  parts.push("updated_at = ?");
-  values.push(new Date().toISOString());
-  values.push(code);
-
-  db.prepare(
-    `UPDATE stories SET ${parts.join(", ")} WHERE code = ?`
-  ).run(...values);
-
-  return getStory(code);
+): Promise<Story | null> {
+  return getAdapter().updateStory(code, updates);
 }
 
-export function listStories(): Story[] {
-  const db = getDb();
-  const rows = db
-    .prepare("SELECT * FROM stories ORDER BY created_at DESC")
-    .all() as Record<string, unknown>[];
-  return rows.map(parseRow);
+export async function listStories(): Promise<Story[]> {
+  return getAdapter().listStories();
 }
 
-export function deleteStory(code: string): boolean {
-  const db = getDb();
-  const result = db.prepare("DELETE FROM stories WHERE code = ?").run(code);
-  return result.changes > 0;
+export async function deleteStory(code: string): Promise<boolean> {
+  return getAdapter().deleteStory(code);
 }
 
-export function storyExists(code: string): boolean {
-  const db = getDb();
-  return !!db
-    .prepare("SELECT 1 FROM stories WHERE code = ?")
-    .get(code);
+export async function storyExists(code: string): Promise<boolean> {
+  return getAdapter().storyExists(code);
 }

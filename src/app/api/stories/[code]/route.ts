@@ -8,7 +8,7 @@ interface RouteContext {
 
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   const { code } = await params;
-  const story = getStory(code.toUpperCase());
+  const story = await getStory(code.toUpperCase());
   if (!story) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
   }
@@ -20,7 +20,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   const body = (await request.json()) as Partial<
     Pick<Story, "character" | "world" | "inventory" | "stations" | "status">
   >;
-  const updated = updateStory(code.toUpperCase(), body);
+  const updated = await updateStory(code.toUpperCase(), body);
   if (!updated) {
     return NextResponse.json({ error: "Story not found" }, { status: 404 });
   }

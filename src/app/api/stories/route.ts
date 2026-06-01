@@ -5,10 +5,10 @@ import { generateCode } from "@/lib/codeGenerator";
 export async function POST(_request: NextRequest) {
   let code = generateCode();
   let attempts = 0;
-  while (storyExists(code) && attempts < 10) {
+  while ((await storyExists(code)) && attempts < 10) {
     code = generateCode();
     attempts++;
   }
-  const story = createStory(code);
+  const story = await createStory(code);
   return NextResponse.json({ code, story }, { status: 201 });
 }

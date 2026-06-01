@@ -1,10 +1,12 @@
 /**
- * Database layer tests — SQLite via better-sqlite3
+ * Database layer tests — SQLite via better-sqlite3 (through SqliteAdapter)
  */
 import { getDb, ensureDb } from "@/lib/db";
 import { createStory, getStory, updateStory, listStories, deleteStory, storyExists } from "@/lib/stories";
 import { getWordLimits, setWordLimits, getAdminPassword } from "@/lib/config";
 
+// Force SQLite mode for tests (no POSTGRES_URL)
+delete process.env.POSTGRES_URL;
 // Use an in-memory DB for tests
 process.env.DB_PATH = ":memory:";
 
@@ -35,71 +37,71 @@ describe("Database Layer (SQLite)", () => {
 describe("stories CRUD", () => {
   const CODE = "TEST";
 
-  test("createStory creates and returns a story", () => {
-    const story = createStory(CODE);
+  test("createStory creates and returns a story", async () => {
+    const story = await createStory(CODE);
     expect(story.code).toBe(CODE);
     expect(story.status).toBe("active");
     expect(story.character.name).toBe("");
     expect(story.stations).toHaveLength(6);
   });
 
-  test("getStory returns null for unknown code", () => {
-    expect(getStory("XXXX")).toBeNull();
+  test("getStory returns null for unknown code", async () => {
+    expect(await getStory("XXXX")).toBeNull();
   });
 
-  test("getStory returns the created story", () => {
-    createStory(CODE);
-    const story = getStory(CODE);
+  test("getStory returns the created story", async () => {
+    await createStory(CODE);
+    const story = await getStory(CODE);
     expect(story).not.toBeNull();
     expect(story!.code).toBe(CODE);
   });
 
-  test("storyExists returns true after creation", () => {
-    createStory(CODE);
-    expect(storyExists(CODE)).toBe(true);
-    expect(storyExists("NOPE")).toBe(false);
+  test("storyExists returns true after creation", async () => {
+    await createStory(CODE);
+    expect(await storyExists(CODE)).toBe(true);
+    expect(await storyExists("NOPE")).toBe(false);
   });
 
-  test("updateStory updates status", () => {
-    createStory(CODE);
-    const updated = updateStory(CODE, { status: "completed" });
+  test("updateStory updates status", async () => {
+    await createStory(CODE);
+    const updated = await updateStory(CODE, { status: "completed" });
     expect(updated!.status).toBe("completed");
   });
 
-  test("listStories returns all stories", () => {
-    createStory("AAA1");
-    createStory("BBB2");
-    const list = listStories();
+  test("listStories returns all stories", async () => {
+    await createStory("AAA1");
+    await createStory("BBB2");
+    const list = await listStories();
     const codes = list.map((s) => s.code);
     expect(codes).toContain("AAA1");
     expect(codes).toContain("BBB2");
   });
 
-  test("deleteStory removes story and returns true", () => {
-    createStory(CODE);
-    expect(deleteStory(CODE)).toBe(true);
-    expect(getStory(CODE)).toBeNull();
+  test("deleteStory removes story and returns true", async () => {
+    await createStory(CODE);
+    expect(await deleteStory(CODE)).toBe(true);
+    expect(await getStory(CODE)).toBeNull();
   });
 
-  test("deleteStory returns false for unknown code", () => {
-    expect(deleteStory("NONE")).toBe(false);
+  test("deleteStory returns false for unknown code", async () => {
+    expect(await deleteStory("NONE")).toBe(false);
   });
 });
 
 describe("config", () => {
-  test("getWordLimits returns defaults", () => {
-    const limits = getWordLimits();
+  test("getWordLimits returns defaults", async () => {
+    const limits = await getWordLimits();
     expect(limits.station1).toBe(120);
     expect(limits.consequence).toBe(60);
   });
 
-  test("setWordLimits persists new values", () => {
-    const limits = getWordLimits();
-    setWordLimits({ ...limits, station1: 200 });
-    expect(getWordLimits().station1).toBe(200);
+  test("setWordLimits persists new values", async () => {
+    const limits = await getWordLimits();
+    await setWordLimits({ ...limits, station1: 200 });
+    expect((await getWordLimits()).station1).toBe(200);
   });
 
-  test("getAdminPassword returns default 'admin'", () => {
-    expect(getAdminPassword()).toBe("admin");
+  test("getAdminPassword returns default 'admin'", async () => {
+    expect(await getAdminPassword()).toBe("admin");
   });
 });
