@@ -43,6 +43,8 @@ next-env.d.ts
 # SQLite database
 /data
 
-.vercel
+# Git bundles (deployment artifacts)
+*.bundle
 
+# Vercel (duplicate removed below)
 /src/generated/prisma

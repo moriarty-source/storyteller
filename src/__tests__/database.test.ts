@@ -5,8 +5,11 @@ import { getDb, ensureDb } from "@/lib/db";
 import { createStory, getStory, updateStory, listStories, deleteStory, storyExists } from "@/lib/stories";
 import { getWordLimits, setWordLimits, getAdminPassword } from "@/lib/config";
 
-// Force SQLite mode for tests (no POSTGRES_URL)
+// Force SQLite mode for tests — unset all Postgres env vars so the
+// adapter falls back to SQLite regardless of local .env contents.
 delete process.env.POSTGRES_URL;
+delete process.env.STORAGE_URL;
+delete process.env.DATABASE_URL;
 // Use an in-memory DB for tests
 process.env.DB_PATH = ":memory:";
 

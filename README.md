@@ -1,231 +1,92 @@
-# Storyteller - Interaktives Storytelling Tool
+# Storyteller
 
-Ein browserbasiertes Tool für Schreibworkshops (Klassen 6-7), mit dem Schüler interaktive Geschichten erstellen können.
+Browserbasiertes Tool für Schreibworkshops (Klassen 6–7). Schüler erstellen interaktive Geschichten nach dem Heldenprinzip — der fertige Text wird mit der Ink-Engine spielbar.
 
-## 🚀 Deployments
+## Live-Instanzen
 
-| Plattform | URL | Best für |
-|-----------|-----|----------|
-| **Vercel (Cloud)** | https://storyteller-app-cyan.vercel.app | Online Workshops, Multi-Geräte |
+| Plattform | URL | Einsatz |
+|---|---|---|
+| **Vercel (Cloud)** | https://storyteller-app-cyan.vercel.app | Online-Workshops, mehrere Klassen |
 | **Raspberry Pi (Lokal)** | http://192.168.178.70:3000 | Schulnetzwerk, Offline, Datenschutz |
 
----
-
-## 📱 Schnelleinstieg
-
-### Variante 1: Cloud (Vercel)
-Einfach auf https://storyteller-app-cyan.vercel.app zugreifen — keine Installation nötig!
-
-### Variante 2: Lokal (Raspberry Pi / Windows / Mac)
+## Schnellstart
 
 ```bash
-# 1. Repository klonen
 git clone https://github.com/moriarty-source/storyteller.git
 cd storyteller
-
-# 2. Installation
 npm install
-
-# 3. Build
 npm run build
-
-# 4. Server starten
 npm start
-
-# 5. Lokale IP-Adresse herausfinden
-ipconfig  # Windows (nach IPv4 suchen)
-ifconfig  # Mac/Linux
-
-# 6. Auf Schüler-Geräten öffnen
-# http://[DEINE-IP]:3000
-# Beispiel: http://192.168.178.70:3000
+# → http://localhost:3000
 ```
 
-**Für Vercel-Deployment deiner eigenen Instanz:**
-1. Repository forken zu deinem GitHub
-2. Auf Vercel importieren (https://vercel.com/new)
-3. Deploy-Button klicken — fertig!
-   (Keine externe Datenbank nötig, SQLite wird lokal/automatisch konfiguriert)
+Keine Datenbank-Konfiguration nötig — SQLite wird automatisch angelegt.
 
----
+## Features
 
-## 📋 Features
+**Für Schüler**
+- Character Sheet (Name, Stärke, Schwäche, Ziel, Geheimnis)
+- 6 Stationen der Heldenreise mit Wort-Limits
+- 2–3 Entscheidungen pro Station (Diamond-Pattern mit Konsequenzen)
+- Inventar-System
+- Auto-Save (500 ms Debounce)
+- Interaktiver Reader (Ink-Engine) nach Abschluss
 
-### Für Schüler
-- ✅ Character Sheet (Name, Stärke, Schwäche, Ziel, Geheimnis)
-- ✅ Inventar-System
-- ✅ 6 Stationen der Heldenreise
-- ✅ 2-3 Entscheidungen pro Station (Diamond-Pattern)
-- ✅ Auto-Save (500ms Debounce)
-- ✅ Word Counter mit Fortschrittsanzeige
-- ✅ Interaktiver Reader zum Durchspielen
-- ✅ PDF-Export für fertige Geschichten
+**Für Lehrkräfte**
+- Admin-Board mit Übersicht aller Geschichten
+- Geschichten als „abgeschlossen" markieren → Reader freischalten
+- Wort-Limits konfigurierbar
+- Passwortgeschützter Bereich (Standard: `admin`)
 
-### Für Lehrkräfte
-- ✅ Admin-Board mit Übersicht aller Geschichten
-- ✅ Geschichten als "abgeschlossen" markieren
-- ✅ Wort-Limits konfigurierbar
-- ✅ Passwort-geschützter Bereich
-
----
-
-## 🏗️ Tech Stack
+## Tech Stack
 
 | Komponente | Technologie |
-|------------|-------------|
-| Framework | Next.js 16 (App Router, Turbopack) |
+|---|---|
+| Framework | Next.js 16 (App Router) |
 | Sprache | TypeScript |
 | Styling | Tailwind CSS 4 |
-| Datenbank | SQLite (via better-sqlite3) |
+| Datenbank | SQLite (Pi) · Neon Postgres (Vercel) |
 | Story-Engine | inkjs 2.4 |
 | PDF-Export | @react-pdf/renderer |
-| Hosting | Vercel + Raspberry Pi |
 
----
-
-## 📁 Projektstruktur
+## Projektstruktur
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── api/               # API Routes
-│   │   ├── stories/       # Story CRUD
-│   │   └── admin/         # Admin endpoints
-│   ├── story/[code]/      # Story pages
-│   │   ├── read/          # Interactive reader
-│   │   └── view/          # Static view + PDF
-│   └── admin/             # Admin board
-├── components/            # React Components
-│   ├── StoryEditor.tsx    # Main editor
-│   ├── StoryReader.tsx    # Interactive reader
-│   ├── CharacterSheet.tsx # Station 0
-│   ├── StationEditor.tsx  # Stations 1-6
-│   └── ...
-├── lib/                   # Utilities
-│   ├── db.ts             # SQLite connection
-│   ├── stories.ts        # Story CRUD (synchronous)
-│   ├── config.ts         # Config management (synchronous)
-│   └── inkCompiler.ts    # Story → Ink compiler
-└── types/                # TypeScript types
-    └── story.ts
+├── app/
+│   ├── api/
+│   │   ├── stories/           # Story CRUD + Ink-Kompilierung
+│   │   └── admin/             # Admin-Endpoints (Auth-geschützt)
+│   ├── story/[code]/
+│   │   ├── page.tsx           # Editor (active) → Redirect (completed)
+│   │   ├── read/              # Interaktiver Reader (inkjs)
+│   │   └── view/              # Statische Übersicht + PDF
+│   └── admin/                 # Admin-Board
+├── components/                # React-Komponenten
+├── lib/
+│   ├── db-adapter.ts          # Adapter-Factory (SQLite ↔ Postgres)
+│   ├── adapters/
+│   │   ├── sqlite.ts          # better-sqlite3 (Pi/lokal)
+│   │   └── postgres.ts        # @neondatabase/serverless (Vercel)
+│   ├── stories.ts             # Story CRUD (async)
+│   ├── config.ts              # Konfiguration (async)
+│   ├── inkCompiler.ts         # Story → Ink-Quelltext
+│   └── adminAuth.ts           # Admin-Authentifizierung
+└── types/story.ts             # TypeScript-Typen
 ```
 
----
-
-## 🔧 Development
+## Entwicklung
 
 ```bash
-# Installation
-npm install
-
-# Development Server
-npm run dev
-
-# Production Build
-npm run build
-npm start
-
-# Tests
-npm test
-
-# Lint
-npm run lint
+npm run dev     # Dev-Server
+npm run build   # Production Build
+npm test        # Jest Tests (53 Tests)
+npm run lint    # ESLint
 ```
 
-### Environment Variables
+## Weiterführend
 
-**Optional (standardmäßig nicht nötig):**
-- `DB_PATH` - SQLite Dateipfad (Standard: `data/stories.db`)
-
-Die Anwendung funktioniert **sofort ohne weitere Konfiguration** — SQLite wird lokal initialisiert.
-
----
-
-## 📊 Datenbank-Schema (SQLite)
-
-### stories table
-```sql
-CREATE TABLE stories (
-  code TEXT PRIMARY KEY,
-  status TEXT DEFAULT 'active',  -- 'active' or 'completed'
-  character TEXT DEFAULT '{}',    -- JSON string
-  world TEXT DEFAULT '{}',        -- JSON string
-  inventory TEXT DEFAULT '[]',    -- JSON string
-  stations TEXT DEFAULT '[]',     -- JSON string
-  created_at TEXT DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-)
-```
-
-### config table
-```sql
-CREATE TABLE config (
-  key TEXT PRIMARY KEY,
-  value TEXT NOT NULL              -- JSON string
-)
-```
-
-**Standard-Konfiguration:**
-- `wordLimits`: Word-Limits pro Station (station1-6, consequence)
-- `adminPassword`: Admin-Passwort für Story-Verwaltung
-
----
-
-## 🎯 Workshop-Ablauf (3 Stunden)
-
-### Phase 1: Welt & Figur (30 Min)
-- Character Sheet ausfüllen
-- Welt-Beschreibung + Problem
-- Inventar einführen
-
-### Phase 2: Heldenreise (90 Min)
-- 6 Stationen durcharbeiten
-- Pro Station: Text + 2-3 Entscheidungen
-- Wort-Limits beachten
-
-### Phase 3: Abschluss (60 Min)
-- Geschichten "abschließen" (Admin)
-- Reader testen
-- PDF-Export zeigen
-- Gemeinsames Lesen
-
----
-
-## 🐛 Troubleshooting
-
-### "Port 3000 already in use"
-```bash
-PORT=3001 npm start
-```
-
-### iPads/Schüler-Geräte können nicht verbinden
-- Firewall: Port 3000 freigeben
-- Gleiches WLAN-Netzwerk: Router-Einstellungen prüfen
-- Test vom Workshop-Rechner: `curl http://localhost:3000`
-- Test von anderem Gerät: `curl http://[SERVER-IP]:3000`
-
-### Stories verlieren beim Neustart (Pi)
-- **Gelöst durch systemd Service** (siehe DEPLOYMENT.md)
-- Manueller Start: `npm start` speichert in `data/stories.db`
-- Sicherung: Kopiere `data/stories.db` vor Neuinstallation
-
-### Ink-Compiler-Fehler
-- Story-Status muss `"completed"` sein, bevor Reader laden kann
-- Überprüfe: Admin-Panel → Story als "abgeschlossen" markieren
-
----
-
-## 📞 Support
-
-- **GitHub Issues:** https://github.com/moriarty-source/storyteller/issues
-- **Dokumentation:** DEPLOYMENT.md für detaillierte Setup-Anleitung
-
----
-
-## 📝 License
-
-MIT License - frei für Bildungszwecke nutzbar
-
-**Erstellt:** 2026-05-31  
-**Letztes Update:** 2026-05-31 (Dual Deployment: Vercel + Raspberry Pi)  
-**Status:** ✅ Production Ready
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Vollständige Deployment-Anleitung (Pi + Vercel)
+- **[docs/SESSION_STATE.md](./docs/SESSION_STATE.md)** — Aktueller Projektstatus
+- **[docs/ROADMAP.md](./docs/ROADMAP.md)** — Offene TODOs und geplante Features
+- **[.env.example](./.env.example)** — Env-Variablen Referenz
