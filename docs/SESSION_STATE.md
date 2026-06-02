@@ -1,7 +1,7 @@
 # Session State — Storyteller
 
 Dieses Dokument beschreibt den aktuellen Projektstatus nach jeder größeren Arbeitsphase.  
-**Letztes Update:** 2026-06-01
+**Letztes Update:** 2026-06-02
 
 ---
 
@@ -50,6 +50,9 @@ Im Vercel Dashboard → Storage → `neon-emerald-cave` → **Environment Variab
 - ✅ Dual-DB Adapter — SQLite (Pi) + Neon Postgres (Vercel), automatisch erkannt
 - ✅ Raspberry Pi systemd-Service — Auto-Start, Auto-Restart
 - ✅ deploy.ps1 — halbautomatisches Deployment-Script
+- ✅ Admin‑Tabelle virtualisiert (react-window) für große Story‑Mengen
+- ✅ Full‑Story‑Workflow E2E‑Test mit Playwright
+- ✅ CI‑Pipeline (GitHub Actions) mit Lint, Tests und Build
 - ✅ 53 Jest-Tests — alle bestanden
 - ✅ TypeScript — keine Fehler
 - ✅ GitHub: https://github.com/moriarty-source/storyteller
@@ -58,15 +61,19 @@ Im Vercel Dashboard → Storage → `neon-emerald-cave` → **Environment Variab
 
 ## Was noch fehlt / bekannte Probleme
 
-Vollständige Liste mit Prioritäten: siehe [ROADMAP.md](./ROADMAP.md)
+- **Kritisch:**
+  - ⚠️ Vercel: `POSTGRES_URL` / `STORAGE_URL` muss im Dashboard gesetzt sein.
 
-**Kritisch:**
-- ⚠️ Vercel: `POSTGRES_URL` Env-Var manuell im Dashboard setzen
+- **Kurzfristige To‑Do’s:**
+  - Automatisches Backup der SQLite‑Datenbank auf dem Pi (Cron‑Job / Script‑Erweiterung).
+  - Verbesserung der npm‑Pfaderkennung im `deploy.ps1` (Fallback‑Logik, Tests).
+  - Export‑Funktion für Stories im Admin‑Board (CSV / PDF).
+  - Ergänzung von E2E‑Tests für den Reader‑Flow und PDF‑Export.
 
-**Bekannte Schwächen:**
-- `deploy.ps1` — npm-Pfad-Erkennung manchmal fehlerhaft (siehe ROADMAP)
-- Kein automatisches Backup der Pi-Datenbank
-- Kein Story-Export aus dem Admin-Board
+- **Langfristige Verbesserungen:**
+  - Mehrere Admin‑Benutzer verwalten.
+  - UI‑Optimierung für mobile Geräte (Responsive Design).
+  - Kollaborations‑Features (gemeinsames Schreiben).
 
 ---
 
@@ -147,6 +154,10 @@ d59f070  Update documentation with dual deployment info (Vercel + Pi)
 174d792  fix: replace @vercel/postgres with better-sqlite3 (SQLite)
 d8841b5  feat: add story-code label in header across all student-facing screens
 43879ec  refactor: optimize project structure and cleanup
+7064f3f  feat: virtualize admin table, add e2e skeleton, backup script improvements
+3a9cdb1  fix: restore ConfigPanel, StationEditor, ChoiceCard and update deploy script
+ff1dbd5  docs: add Backup & Deployment section to README
+ba1899b  test: add full story workflow e2e test and CI workflow
 ```
 
 ---
