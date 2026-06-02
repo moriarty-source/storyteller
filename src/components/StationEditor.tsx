@@ -11,6 +11,23 @@ import WordCounter from "@/components/WordCounter";
 import ChoiceCard from "@/components/ChoiceCard";
 import AutoGrowTextarea from "@/components/AutoGrowTextarea";
 
+export type PreviousStationEntry = {
+  id: number;
+  title: string;
+  text: string;
+  choices: Choice[];
+};
+
+interface StationEditorProps {
+  station: Station;
+  meta: StationMeta;
+  wordLimit: number;
+  consequenceLimit: number;
+  onStationChange: (station: Station) => void;
+  previousStations?: PreviousStationEntry[];
+  onAddInventoryItem: (item: string) => void;
+}
+
 // Quick-add inventory item inline
 function InventoryQuickAdd({ onAdd }: { onAdd: (item: string) => void }) {
   const [open, setOpen] = useState(false);
@@ -138,7 +155,7 @@ export default function StationEditor({
                 <div key={prev.id} className="px-4 py-4 space-y-3">
                   {/* Station heading */}
                   <p className="text-xs font-bold uppercase tracking-widest text-gray-400">
-                    Station {prev.id} — {prev.title}
+                    Station {prev.id}
                   </p>
 
                   {/* Main text */}

@@ -41,17 +41,19 @@ if ($LASTEXITCODE -ne 0) {
 
 # 4. Build on Pi and detect npm path
 Write-Host "[4/5] Building on Pi..." -ForegroundColor Yellow
-$sshCmd = @"
+$sshCmd = @'
 export NVM_DIR=\"\$HOME/.nvm\"
 [ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
 set -e
 rm -rf ~/storyteller
 git clone ~/storyteller.bundle ~/storyteller
 cd ~/storyteller
+npmPath=$(command -v npm || which npm || echo '/home/pi/.nvm/versions/node/v22.22.3/bin/npm')
+export PATH="$(dirname $npmPath):$PATH"
 npm ci
 npm run build
-command -v npm || which npm || echo '/home/pi/.nvm/versions/node/v22.22.3/bin/npm'
-"@
+echo $npmPath
+'@
 
 $buildOutput = ssh -i $SshKey "pi@${PiIp}" "$sshCmd"
 if ($LASTEXITCODE -ne 0) {

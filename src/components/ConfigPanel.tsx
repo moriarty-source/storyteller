@@ -30,7 +30,8 @@ export default function ConfigPanel({ limits, onSave, onPasswordSave }: ConfigPa
   // Sync when parent passes new limits
   if (JSON.stringify(local) !== JSON.stringify(limits) && !saving) {
     // Only update if limits externally changed (e.g. after refresh)
-    // This is a simple approach; for production consider useEffect
+    // Simple approach; for production consider useEffect
+    setLocal(limits);
   }
 
   function handleChange(key: keyof WordLimits, value: string) {
@@ -47,6 +48,7 @@ export default function ConfigPanel({ limits, onSave, onPasswordSave }: ConfigPa
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  }
 
   async function handlePasswordSave() {
     if (!newPassword) return;
@@ -62,7 +64,6 @@ export default function ConfigPanel({ limits, onSave, onPasswordSave }: ConfigPa
       setPwSaving(false);
       setTimeout(() => setPwSaved(false), 2000);
     }
-  }
   }
 
   return (
@@ -80,10 +81,7 @@ export default function ConfigPanel({ limits, onSave, onPasswordSave }: ConfigPa
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         {STATION_LABELS.map(({ key, label }) => (
           <div key={key} className="flex items-center justify-between gap-4">
-            <label
-              htmlFor={`limit-${key}`}
-              className="flex-1 text-sm font-medium text-gray-700"
-            >
+            <label htmlFor={`limit-${key}`} className="flex-1 text-sm font-medium text-gray-700">
               {label}
             </label>
             <div className="flex items-center gap-1.5 shrink-0">
@@ -98,7 +96,10 @@ export default function ConfigPanel({ limits, onSave, onPasswordSave }: ConfigPa
                 className="w-20 rounded-xl border-2 border-gray-200 px-2 py-1.5 text-center text-sm font-bold tabular-nums focus:border-[var(--color-amber)] focus:outline-none transition-colors"
               />
               <span className="text-xs text-gray-400">Wörter</span>
-</div>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <div className="mt-6 flex items-center gap-3">
         <input
@@ -121,9 +122,6 @@ export default function ConfigPanel({ limits, onSave, onPasswordSave }: ConfigPa
           <span className="text-sm font-semibold text-green-600">✓ Passwort gesetzt</span>
         )}
       </div>
-          </div>
-        ))}
-      </div>
 
       <div className="mt-6 flex items-center gap-3">
         <button
@@ -135,7 +133,6 @@ export default function ConfigPanel({ limits, onSave, onPasswordSave }: ConfigPa
         >
           {saving ? "Wird gespeichert…" : "Speichern & Anwenden"}
         </button>
-
         {saved && (
           <span className="text-sm font-semibold text-green-600" role="status">
             ✓ Gespeichert
