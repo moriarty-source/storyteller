@@ -25,8 +25,8 @@ function PasswordGate({ onAuth }: PasswordGateProps) {
 
     try {
       const [storiesRes, configRes] = await Promise.all([
-        fetch("/api/admin/stories", { headers: { Authorization: password } }),
-        fetch("/api/admin/config", { headers: { Authorization: password } }),
+        fetch("/api/admin/stories", { headers: { "x-admin-password": password } }),
+        fetch("/api/admin/config", { headers: { "x-admin-password": password } }),
       ]);
 
       if (storiesRes.status === 401 || configRes.status === 401) {
@@ -107,7 +107,7 @@ function Dashboard({ password, initialStories, initialLimits }: DashboardProps) 
   const [refreshing, setRefreshing] = useState(false);
   const [refreshError, setRefreshError] = useState<string | null>(null);
 
-  const authHeaders = { Authorization: password };
+  const authHeaders = { "x-admin-password": password };
 
   const fetchStories = useCallback(async () => {
     setRefreshing(true);
@@ -162,6 +162,20 @@ function Dashboard({ password, initialStories, initialLimits }: DashboardProps) 
     if (!res.ok) throw new Error("Fehler beim Speichern");
     const data = (await res.json()) as { wordLimits: WordLimits };
     setWordLimits(data.wordLimits);
+  }
+
+    async function handlePasswordChange(newPassword: string) {
+    try {
+      const res = await fetch("/api/admin/password", {
+        method: "PUT",
+        headers: { ...authHeaders, "Content-Type": "application/json" },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      if (!res.ok) throw new Error("Passwort-Änderung fehlgeschlagen");
+      alert("Passwort erfolgreich geändert");
+    } catch {
+      alert("Fehler beim Ändern des Passworts");
+    }
   }
 
   const activeCount = stories.filter((s) => s.status === "active").length;
@@ -289,7 +303,7 @@ function Dashboard({ password, initialStories, initialLimits }: DashboardProps) 
         </section>
 
         {/* Config panel */}
-        <ConfigPanel limits={wordLimits} onSave={handleSaveLimits} />
+        <ConfigPanel limits={wordLimits} onSave={handleSaveLimits} onPasswordSave={handlePasswordChange} />
 
       </div>
     </div>

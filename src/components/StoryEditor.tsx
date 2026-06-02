@@ -109,39 +109,41 @@ export default function StoryEditor({ story: initialStory, wordLimits }: StoryEd
   }
 
   // ── Navigation ─────────────────────────────────────────────────────────────
-  async function navigateToStation(targetId: number) {
-    // Save immediately before switching stations
-    if (saveTimeoutRef.current) {
-      clearTimeout(saveTimeoutRef.current);
-      saveTimeoutRef.current = null;
-    }
-    await saveStory();
-
-    // Mark current station as completed when moving forward from it
-    if (currentStation >= 1 && targetId > currentStation) {
-      const newStations = stations.map((s) =>
-        s.id === currentStation ? { ...s, completed: true } : s
-      );
-      setStations(newStations);
-    }
-
-    setCurrentStation(targetId);
+async function navigateToStation(targetId: number) {
+  // Ensure any pending auto‑save is flushed
+  if (saveTimeoutRef.current) {
+    clearTimeout(saveTimeoutRef.current);
+    saveTimeoutRef.current = null;
   }
+
+  // Determine whether we are moving forward – if so we need to persist the completed flag
+  let stationsToSave = stations;
+  let newStations = stations;
+  if (currentStation >= 1 && targetId > currentStation) {
+    newStations = stations.map((s) =>
+      s.id === currentStation ? { ...s, completed: true } : s
+    );
+    stationsToSave = newStations;
+  }
+
+  // Save current state (including any completed flag if applicable)
+  await saveStory(undefined, undefined, stationsToSave);
+
+  // Update local state after successful save
+  setStations(newStations);
+  setCurrentStation(targetId);
+}
 
   function handleCharacterSheetComplete() {
     navigateToStation(1);
   }
 
-  function handleStationNext() {
-    if (currentStation < 6) {
-      // Mark current station completed
-      const newStations = stations.map((s) =>
-        s.id === currentStation ? { ...s, completed: true } : s
-      );
-      setStations(newStations);
-      navigateToStation(currentStation + 1);
-    }
+function handleStationNext() {
+  if (currentStation < 6) {
+    // Navigation will handle persisting the completed flag
+    navigateToStation(currentStation + 1);
   }
+}
 
   function handleStationBack() {
     if (currentStation > 1) {

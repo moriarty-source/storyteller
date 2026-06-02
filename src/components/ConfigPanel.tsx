@@ -6,6 +6,7 @@ import type { WordLimits } from "@/types/story";
 interface ConfigPanelProps {
   limits: WordLimits;
   onSave: (limits: WordLimits) => void;
+  onPasswordSave: (newPassword: string) => Promise<void>;
 }
 
 const STATION_LABELS: { key: keyof WordLimits; label: string }[] = [
@@ -18,10 +19,13 @@ const STATION_LABELS: { key: keyof WordLimits; label: string }[] = [
   { key: "consequence", label: "Konsequenz (je Auswahl)" },
 ];
 
-export default function ConfigPanel({ limits, onSave }: ConfigPanelProps) {
+export default function ConfigPanel({ limits, onSave, onPasswordSave }: ConfigPanelProps) {
   const [local, setLocal] = useState<WordLimits>(limits);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [pwSaving, setPwSaving] = useState(false);
+  const [pwSaved, setPwSaved] = useState(false);
 
   // Sync when parent passes new limits
   if (JSON.stringify(local) !== JSON.stringify(limits) && !saving) {
@@ -43,6 +47,22 @@ export default function ConfigPanel({ limits, onSave }: ConfigPanelProps) {
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+
+  async function handlePasswordSave() {
+    if (!newPassword) return;
+    setPwSaving(true);
+    setPwSaved(false);
+    try {
+      await onPasswordSave(newPassword);
+      setPwSaved(true);
+      setNewPassword("");
+    } catch {
+      // simple error handling – UI could be extended
+    } finally {
+      setPwSaving(false);
+      setTimeout(() => setPwSaved(false), 2000);
+    }
+  }
   }
 
   return (
@@ -78,7 +98,29 @@ export default function ConfigPanel({ limits, onSave }: ConfigPanelProps) {
                 className="w-20 rounded-xl border-2 border-gray-200 px-2 py-1.5 text-center text-sm font-bold tabular-nums focus:border-[var(--color-amber)] focus:outline-none transition-colors"
               />
               <span className="text-xs text-gray-400">Wörter</span>
-            </div>
+</div>
+
+      <div className="mt-6 flex items-center gap-3">
+        <input
+          type="password"
+          placeholder="Neues Admin-Passwort"
+          value={newPassword}
+          onChange={(e) => setNewPassword(e.target.value)}
+          className="rounded-xl border-2 border-gray-200 px-2 py-1.5 text-sm"
+        />
+        <button
+          type="button"
+          onClick={handlePasswordSave}
+          disabled={pwSaving || !newPassword}
+          className="rounded-2xl px-4 py-2 text-sm font-bold text-white"
+          style={{ background: "var(--color-amber)" }}
+        >
+          {pwSaving ? "Wird gespeichert…" : "Passwort ändern"}
+        </button>
+        {pwSaved && (
+          <span className="text-sm font-semibold text-green-600">✓ Passwort gesetzt</span>
+        )}
+      </div>
           </div>
         ))}
       </div>

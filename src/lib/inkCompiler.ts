@@ -52,7 +52,7 @@ export function compileToInk(
   // For reader mode, skip intro narrative text (shown in Cover UI instead)
   if (!forReader) {
     lines.push(
-      `In einer Welt: {character_name} ist ${story.character.strength} und kämpft gegen ${escapeInkString(story.character.weakness)}.`
+      `In einer Welt: {character_name} ist {character_strength} und kämpft gegen ${escapeInkString(story.character.weakness)}.`
     );
     lines.push(`Welt: ${escapeInkString(story.world.description)}`);
     lines.push(`Problem: ${escapeInkString(story.world.problem)}`);

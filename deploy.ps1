@@ -11,36 +11,63 @@ $ErrorActionPreference = "Stop"
 
 Write-Host ">>> Story Maker Deployment" -ForegroundColor Cyan
 
-# 1. Create bundle
-Write-Host "`n[1/4] Creating bundle..." -ForegroundColor Yellow
+# 1. Create local backup
+Write-Host "[1/5] Creating local backup..." -ForegroundColor Yellow
+$date = Get-Date -Format 'yyyy-MM-dd-HHmm'
+$backupDir = "backups"
+if (-not (Test-Path $backupDir)) { New-Item -ItemType Directory -Path $backupDir | Out-Null }
+try {
+    scp -i $SshKey "pi@${PiIp}:/home/pi/storyteller/data/stories.db" "$backupDir/stories-${date}.db" 2>$null
+    Write-Host "[INFO] Backup saved to $backupDir/stories-${date}.db" -ForegroundColor Cyan
+} catch {
+    Write-Host "[WARN] Backup failed (possibly first deploy or Pi offline)" -ForegroundColor Yellow
+}
+
+# 2. Create bundle
+Write-Host "`n[2/5] Creating bundle..." -ForegroundColor Yellow
 git bundle create storyteller.bundle --all
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Bundle creation failed" -ForegroundColor Red
     exit 1
 }
 
-# 2. Upload bundle to Pi
-Write-Host "[2/4] Uploading to Pi..." -ForegroundColor Yellow
+# 3. Upload bundle to Pi
+Write-Host "[3/5] Uploading to Pi..." -ForegroundColor Yellow
 scp -i $SshKey storyteller.bundle "pi@${PiIp}:/home/pi/"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Upload failed" -ForegroundColor Red
     exit 1
 }
 
-# 3. Build on Pi and generate service file with correct npm path
-Write-Host "[3/4] Building on Pi..." -ForegroundColor Yellow
-$buildOutput = ssh -i $SshKey "pi@${PiIp}" "bash -i -c 'set -e; rm -rf ~/storyteller; git clone ~/storyteller.bundle ~/storyteller; cd ~/storyteller; npm ci; npm run build; which npm'"
+# 4. Build on Pi and detect npm path
+Write-Host "[4/5] Building on Pi..." -ForegroundColor Yellow
+$sshCmd = @"
+export NVM_DIR=\"\$HOME/.nvm\"
+[ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+set -e
+rm -rf ~/storyteller
+git clone ~/storyteller.bundle ~/storyteller
+cd ~/storyteller
+npm ci
+npm run build
+command -v npm || which npm || echo '/home/pi/.nvm/versions/node/v22.22.3/bin/npm'
+"@
+
+$buildOutput = ssh -i $SshKey "pi@${PiIp}" "$sshCmd"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "[ERROR] Build failed" -ForegroundColor Red
     exit 1
 }
 
-# Extract npm path from last line of output
-$npmPath = ($buildOutput -split "`n" | Where-Object { $_ -match "^/.*npm$" } | Select-Object -Last 1).Trim()
-if (-not $npmPath) {
+# Extract npm path from last non-empty line of output
+$npmPath = ($buildOutput -split "`n" | Where-Object { $_.Trim() -ne '' } | Select-Object -Last 1).Trim()
+# Validate that it looks like a path
+if (-not $npmPath -or -not ($npmPath -match '^/.*npm(\s*$)?')) {
     $npmPath = "/home/pi/.nvm/versions/node/v22.22.3/bin/npm"
     Write-Host "[WARN] Could not detect npm path, using default: $npmPath" -ForegroundColor Yellow
 } else {
+    # Strip any trailing whitespace/newlines
+    $npmPath = $npmPath -replace '\s+$', ''
     Write-Host "[INFO] Detected npm path: $npmPath" -ForegroundColor Cyan
 }
 
@@ -69,8 +96,8 @@ WantedBy=multi-user.target
 
 $serviceContent | Out-File -FilePath "storyteller_generated.service" -Encoding utf8NoBOM
 
-# 4. Upload service file and install
-Write-Host "[4/4] Installing systemd service..." -ForegroundColor Yellow
+# 5. Upload service file and install
+Write-Host "[5/5] Installing systemd service..." -ForegroundColor Yellow
 scp -i $SshKey storyteller_generated.service "pi@${PiIp}:/home/pi/storyteller.service"
 Remove-Item storyteller_generated.service
 

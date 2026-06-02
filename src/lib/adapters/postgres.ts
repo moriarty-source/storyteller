@@ -12,27 +12,9 @@ import type {
   Station,
   StoryStatus,
 } from "@/types/story";
-import { STATIONS, DEFAULT_WORD_LIMITS } from "@/types/story";
+import { DEFAULT_WORD_LIMITS } from "@/types/story";
 import { neon } from "@neondatabase/serverless";
-
-const DEFAULT_CHARACTER: Character = {
-  name: "",
-  strength: "Mutig",
-  weakness: "",
-  goal: "",
-};
-
-const DEFAULT_WORLD: World = {
-  description: "",
-  problem: "",
-};
-
-const DEFAULT_STATIONS: Station[] = STATIONS.map((s) => ({
-  id: s.id,
-  text: "",
-  choices: [],
-  completed: false,
-}));
+import { DEFAULT_CHARACTER, DEFAULT_WORLD, DEFAULT_STATIONS } from "./defaults";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseRow(row: Record<string, any>): Story {
