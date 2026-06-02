@@ -90,3 +90,9 @@ npm run lint    # ESLint
 - **[docs/SESSION_STATE.md](./docs/SESSION_STATE.md)** — Aktueller Projektstatus
 - **[docs/ROADMAP.md](./docs/ROADMAP.md)** — Offene TODOs und geplante Features
 - **[.env.example](./.env.example)** — Env-Variablen Referenz
+
+## Backup & Deployment
+
+- Das `deploy.ps1` Skript erstellt jetzt ein lokales Backup der `stories.db` vor dem Upload.
+- Es erkennt den npm-Pfad auf dem Raspberry Pi über `command -v npm` bzw. verwendet den Standard‑Pfad `/home/pi/.nvm/versions/node/v22.22.3/bin/npm`.
+- Das generierte systemd‑Service‑File verwendet den erkannten npm‑Pfad, um das Projekt zu starten.
