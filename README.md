@@ -78,21 +78,26 @@ src/
 ## Entwicklung
 
 ```bash
-npm run dev     # Dev-Server
-npm run build   # Production Build
-npm test        # Jest Tests (53 Tests)
-npm run lint    # ESLint
+npm run dev          # Dev-Server
+npm run build        # Production Build
+npm test             # Jest Unit-Tests (58 Tests)
+npm run test:e2e     # Playwright E2E-Tests (Dev-Server muss laufen)
+npm run lint         # ESLint (v9 Flat Config)
 ```
+
+## Deployment
+
+```bash
+# Raspberry Pi (automatisch: Backup → Bundle → Upload → Build → Service)
+.\deploy.ps1
+
+# Vercel (automatisch bei Push)
+git push origin master
+```
+
+Vollständige Anleitung: **[DEPLOYMENT.md](./DEPLOYMENT.md)**
 
 ## Weiterführend
 
-- **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Vollständige Deployment-Anleitung (Pi + Vercel)
-- **[docs/SESSION_STATE.md](./docs/SESSION_STATE.md)** — Aktueller Projektstatus
+- **[DEPLOYMENT.md](./DEPLOYMENT.md)** — Deployment-Anleitung (Pi + Vercel + Lokal)
 - **[docs/ROADMAP.md](./docs/ROADMAP.md)** — Offene TODOs und geplante Features
-- **[.env.example](./.env.example)** — Env-Variablen Referenz
-
-## Backup & Deployment
-
-- Das `deploy.ps1` Skript erstellt jetzt ein lokales Backup der `stories.db` vor dem Upload.
-- Es erkennt den npm-Pfad auf dem Raspberry Pi über `command -v npm` bzw. verwendet den Standard‑Pfad `/home/pi/.nvm/versions/node/v22.22.3/bin/npm`.
-- Das generierte systemd‑Service‑File verwendet den erkannten npm‑Pfad, um das Projekt zu starten.

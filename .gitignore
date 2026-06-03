@@ -46,5 +46,8 @@ next-env.d.ts
 # Git bundles (deployment artifacts)
 *.bundle
 
+# Local DB backups (created by deploy.ps1)
+/backups
+
 # Vercel (duplicate removed below)
 /src/generated/prisma

@@ -8,7 +8,7 @@ Storyteller läuft auf zwei Plattformen gleichzeitig. Die Datenbankwahl erfolgt 
 
 ## Raspberry Pi (Lokal / Schulnetzwerk)
 
-### Erstinstallation
+### Deployment
 
 Auf dem Windows-Rechner, der mit dem Pi verbunden ist:
 
@@ -19,11 +19,12 @@ Auf dem Windows-Rechner, der mit dem Pi verbunden ist:
 .\deploy.ps1 -PiIp 192.168.178.70 -SshKey "C:\Users\Offic\.ssh\raspi_key"
 ```
 
-Das Script:
-1. Erstellt einen Git-Bundle mit allen lokalen Commits
-2. Lädt den Bundle auf den Pi hoch (SCP)
-3. Klont das Repo, führt `npm ci` + `npm run build` aus
-4. Installiert und startet den systemd-Service `storyteller`
+Das Script führt automatisch folgende Schritte aus:
+1. **Backup** — Lädt `stories.db` vom Pi in `backups/stories-DATUM.db`
+2. **Bundle** — Erstellt einen Git-Bundle mit allen lokalen Commits
+3. **Upload** — Überträgt den Bundle via SCP auf den Pi
+4. **Build** — Klont das Repo, führt `npm ci` + `npm run build` aus
+5. **Service** — Installiert und startet den systemd-Service `storyteller`
 
 ### Service verwalten (auf dem Pi)
 
@@ -33,18 +34,18 @@ sudo systemctl restart storyteller   # Neustart
 sudo journalctl -u storyteller -f    # Live-Logs
 ```
 
-### Daten sichern
+### Manuelles Backup der Datenbank
 
-```bash
-# Backup der SQLite-Datenbank (vom Windows-Rechner aus)
-scp -i "C:\Users\Offic\.ssh\raspi_key" pi@192.168.178.70:/home/pi/storyteller/data/stories.db backup-$(date +%Y-%m-%d).db
+```powershell
+# Vom Windows-Rechner aus:
+scp -i "C:\Users\Offic\.ssh\raspi_key" pi@192.168.178.70:/home/pi/storyteller/data/stories.db backups/stories-manual.db
 ```
 
-**Wichtig:** `data/stories.db` ist in `.gitignore` — Daten bleiben bei Deployments erhalten, werden aber nicht versioniert. Vor jedem Re-Deploy Backup erstellen!
+**Wichtig:** `data/stories.db` ist in `.gitignore` — Daten bleiben bei Deployments erhalten, werden aber nicht versioniert. Das Script legt automatisch vor jedem Deploy ein Backup unter `backups/` an (ebenfalls in `.gitignore`).
 
 ### Netzwerk-Zugriff für Schüler
 
-1. Pi und iPads im gleichen WLAN
+1. Pi und Geräte im gleichen WLAN
 2. URL: `http://192.168.178.70:3000`
 3. Test: `curl http://192.168.178.70:3000` vom Pi selbst
 
@@ -52,40 +53,30 @@ scp -i "C:\Users\Offic\.ssh\raspi_key" pi@192.168.178.70:/home/pi/storyteller/da
 
 ## Vercel (Cloud)
 
-### Erstinstallation (eigene Instanz)
-
-1. Repository auf GitHub forken: https://github.com/moriarty-source/storyteller
-2. Auf Vercel importieren: https://vercel.com/new → GitHub-Repo auswählen → Deploy
-3. Neon-Datenbank verknüpfen (siehe nächster Abschnitt)
-
-### Datenbank einrichten (einmalig, ⚠️ noch ausstehend!)
-
-Im Vercel Dashboard des Projekts:
-
-1. **Storage** → **Create Database** → **Neon**
-2. Name: `storyteller-db`, Region: `Frankfurt (eu-central-1)`
-3. **Create & Continue** → **Connect**
-
-Vercel setzt automatisch `POSTGRES_URL` (oder `STORAGE_URL` je nach Prefix-Wahl) und triggert ein neues Deployment.
-
-**Aktuelle Instanz:** https://storyteller-app-cyan.vercel.app  
-→ Neon-DB `neon-emerald-cave` ist bereits verbunden, Env-Var wird noch gesetzt.
-
 ### Updates deployen
 
 ```bash
 git push origin master
 ```
 
-Vercel deployed automatisch bei jedem Push auf `master`.
+Vercel deployed automatisch bei jedem Push auf `master`. Die CI-Pipeline (GitHub Actions) läuft davor: Lint → Tests → Build.
+
+### Erstinstallation (eigene Instanz)
+
+1. Repository auf GitHub forken: https://github.com/moriarty-source/storyteller
+2. Auf Vercel importieren: https://vercel.com/new → GitHub-Repo auswählen → Deploy
+3. Neon-Datenbank verknüpfen:
+   - Vercel Dashboard → **Storage** → **Create Database** → **Neon**
+   - Name wählen, Region `Frankfurt (eu-central-1)`
+   - **Connect** — Vercel setzt `POSTGRES_URL` automatisch und triggert Redeploy
 
 ### Env-Variablen
 
 | Variable | Wert | Wann |
 |---|---|---|
-| `POSTGRES_URL` | (von Vercel/Neon) | Vercel — Standard-Prefix |
-| `STORAGE_URL` | (von Vercel/Neon) | Vercel — wenn Prefix „STORAGE" gewählt |
-| `DATABASE_URL` | (von Vercel/Neon) | Vercel — Legacy-Fallback |
+| `POSTGRES_URL` | (von Vercel/Neon automatisch) | Vercel — Standard-Prefix |
+| `STORAGE_URL` | (von Vercel/Neon automatisch) | Vercel — wenn Prefix „STORAGE" gewählt |
+| `DATABASE_URL` | (manuell) | Legacy-Fallback |
 | `DB_PATH` | `/pfad/zur/stories.db` | Pi/Lokal — optional, Standard: `data/stories.db` |
 
 Der Adapter prüft alle drei Postgres-Variablen in dieser Reihenfolge. Eine davon reicht.
@@ -97,14 +88,12 @@ Der Adapter prüft alle drei Postgres-Variablen in dieser Reihenfolge. Eine davo
 ```bash
 npm install
 npm run dev      # Dev-Server auf http://localhost:3000
+npm test         # Jest Unit-Tests
+npm run lint     # ESLint
+npm run build    # Production Build prüfen
 ```
 
 Keine Datenbank-Konfiguration nötig — SQLite wird unter `data/stories.db` angelegt.
-
-```bash
-npm test         # 53 Tests
-npm run build    # Production Build prüfen
-```
 
 Env-Vars für lokale Entwicklung: siehe `.env.example`.
 
@@ -112,22 +101,19 @@ Env-Vars für lokale Entwicklung: siehe `.env.example`.
 
 ## Troubleshooting
 
-### Pi: „npm: command not found" beim Deploy
+### Pi: Build schlägt fehl (npm not found)
 
-Das `deploy.ps1`-Script erkennt den npm-Pfad manchmal nicht korrekt. Workaround: Build manuell über SSH starten:
+Das `deploy.ps1`-Script erkennt den npm-Pfad automatisch über `command -v npm`. Falls das fehlschlägt, Build manuell über SSH:
 
 ```bash
-ssh -i "C:\Users\Offic\.ssh\raspi_key" pi@192.168.178.70 "bash -i -c 'cd ~/storyteller && npm ci && npm run build && sudo systemctl restart storyteller'"
+ssh -i "C:\Users\Offic\.ssh\raspi_key" pi@192.168.178.70 \
+  "export NVM_DIR=~/.nvm && . ~/.nvm/nvm.sh && cd ~/storyteller && npm ci && npm run build && sudo systemctl restart storyteller"
 ```
-
-### Vercel: 500 Internal Server Error bei Story-Erstellung
-
-Ursache: Kein Postgres-URL gesetzt. Lösung: Neon-Datenbank im Vercel Dashboard unter Storage verknüpfen.
 
 ### iPads können nicht verbinden
 
 - Gleiches WLAN sicherstellen
-- IP-Adresse prüfen: `ipconfig` (Windows) / `ifconfig` (Linux)
+- IP-Adresse prüfen: `hostname -I` auf dem Pi
 - Firewall: Port 3000 TCP eingehend freigeben
 
 ### Port 3000 belegt
@@ -147,7 +133,7 @@ POSTGRES_URL / STORAGE_URL / DATABASE_URL gesetzt?
     nein → SqliteAdapter (better-sqlite3)
            synchron, dateibasiert, zero-config
 
-src/lib/db-adapter.ts       ← Factory + DbAdapter Interface
+src/lib/db-adapter.ts        ← Factory + DbAdapter Interface (async ESM import)
 src/lib/adapters/postgres.ts ← Neon-Implementierung
 src/lib/adapters/sqlite.ts   ← SQLite-Implementierung
 src/lib/stories.ts           ← async CRUD-Wrapper
