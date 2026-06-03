@@ -195,7 +195,11 @@ export class PostgresAdapter implements DbAdapter {
     await this.ensureSchema();
     const rows = (await this.sql`SELECT value FROM config WHERE key = 'adminPassword'`) as { value: string }[];
     if (!rows[0]) return "admin";
-    return JSON.parse(rows[0].value) as string;
+    try {
+      return JSON.parse(rows[0].value) as string;
+    } catch {
+      return rows[0].value;
+    }
   }
 
   async setAdminPassword(password: string): Promise<void> {

@@ -9,11 +9,11 @@ import { getAdapter } from "@/lib/db-adapter";
 import type { Story } from "@/types/story";
 
 export async function createStory(code: string): Promise<Story> {
-  return getAdapter().createStory(code);
+  return (await getAdapter()).createStory(code);
 }
 
 export async function getStory(code: string): Promise<Story | null> {
-  return getAdapter().getStory(code);
+  return (await getAdapter()).getStory(code);
 }
 
 export async function updateStory(
@@ -22,17 +22,17 @@ export async function updateStory(
     Pick<Story, "character" | "world" | "inventory" | "stations" | "status">
   >
 ): Promise<Story | null> {
-  return getAdapter().updateStory(code, updates);
+  return (await getAdapter()).updateStory(code, updates);
 }
 
 export async function listStories(): Promise<Story[]> {
-  return getAdapter().listStories();
+  return (await getAdapter()).listStories();
 }
 
 export async function deleteStory(code: string): Promise<boolean> {
-  return getAdapter().deleteStory(code);
+  return (await getAdapter()).deleteStory(code);
 }
 
 export async function storyExists(code: string): Promise<boolean> {
-  return getAdapter().storyExists(code);
+  return (await getAdapter()).storyExists(code);
 }

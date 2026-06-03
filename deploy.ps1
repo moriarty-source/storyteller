@@ -96,7 +96,7 @@ SyslogIdentifier=storyteller
 WantedBy=multi-user.target
 "@
 
-$serviceContent | Out-File -FilePath "storyteller_generated.service" -Encoding utf8NoBOM
+$serviceContent | Out-File -FilePath "storyteller_generated.service" -Encoding utf8
 
 # 5. Upload service file and install
 Write-Host "[5/5] Installing systemd service..." -ForegroundColor Yellow

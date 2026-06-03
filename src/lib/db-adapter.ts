@@ -43,22 +43,21 @@ function getPostgresUrl(): string | undefined {
   );
 }
 
-export function getAdapter(): DbAdapter {
+export async function getAdapter(): Promise<DbAdapter> {
   if (_adapter) return _adapter;
 
   const pgUrl = getPostgresUrl();
-  if (pgUrl) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require("./adapters/postgres") as {
-      PostgresAdapter: new (url: string) => DbAdapter;
-    };
-    _adapter = new mod.PostgresAdapter(pgUrl);
-  } else {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const mod = require("./adapters/sqlite") as {
-      SqliteAdapter: new () => DbAdapter;
-    };
-    _adapter = new mod.SqliteAdapter();
+  try {
+    if (pgUrl) {
+      const mod = await import("./adapters/postgres");
+      _adapter = new mod.PostgresAdapter(pgUrl);
+    } else {
+      const mod = await import("./adapters/sqlite");
+      _adapter = new mod.SqliteAdapter();
+    }
+  } catch (err) {
+    console.error("Failed to load adapter:", err);
+    throw err;
   }
 
   return _adapter;

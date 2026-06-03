@@ -143,7 +143,11 @@ export class SqliteAdapter implements DbAdapter {
       .prepare("SELECT value FROM config WHERE key = 'adminPassword'")
       .get() as { value: string } | undefined;
     if (!row) return "admin";
-    return JSON.parse(row.value) as string;
+    try {
+      return JSON.parse(row.value) as string;
+    } catch {
+      return row.value;
+    }
   }
 
   async setAdminPassword(password: string): Promise<void> {
