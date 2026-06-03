@@ -4,27 +4,17 @@ import { getWordLimits, setWordLimits } from "@/lib/config";
 import { checkAdminAuth } from "@/lib/adminAuth";
 import type { WordLimits } from "@/types/story";
 
-function jsonResponse(data: unknown, init: { status?: number } = {}) {
-  const { status = 200 } = init;
-  return {
-    status,
-    async json() {
-      return data;
-    },
-  } as any;
-}
-
 export async function GET(req: NextRequest) {
   if (!(await checkAdminAuth(req))) {
-    return jsonResponse({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const limits = await getWordLimits();
-  return jsonResponse(limits);
+  return NextResponse.json(limits);
 }
 
 export async function PATCH(req: NextRequest) {
   if (!(await checkAdminAuth(req))) {
-    return jsonResponse({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   const body = (await req.json()) as Partial<WordLimits>;
 
@@ -38,13 +28,13 @@ export async function PATCH(req: NextRequest) {
     "consequence",
   ];
   for (const k of keys) {
-    const val = (body as any)[k];
+    const val = body[k];
     if (typeof val !== "number" || !Number.isInteger(val) || val <= 0) {
-      return jsonResponse({ error: `Invalid word limit for ${k}` }, { status: 400 });
+      return NextResponse.json({ error: `Invalid word limit for ${k}` }, { status: 400 });
     }
   }
 
   await setWordLimits(body as WordLimits);
   const limits = await getWordLimits();
-  return jsonResponse({ wordLimits: limits });
+  return NextResponse.json({ wordLimits: limits });
 }

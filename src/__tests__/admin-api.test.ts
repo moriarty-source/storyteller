@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import { PATCH as patchConfig, GET as getConfig } from '@/app/api/admin/config/route';
 import { PUT as putPassword } from '@/app/api/admin/password/route';
 import type { NextRequest } from 'next/server';
@@ -22,7 +25,7 @@ jest.mock('@/lib/config', () => ({
   setAdminPassword: jest.fn().mockResolvedValue(undefined),
 }));
 
-function mockRequest(body?: any): NextRequest {
+function mockRequest(body?: unknown): NextRequest {
   return {
     json: async () => body,
   } as unknown as NextRequest;
@@ -30,7 +33,7 @@ function mockRequest(body?: any): NextRequest {
 
 describe('Admin Config API', () => {
   test('GET returns word limits', async () => {
-    const res = await getConfig({} as any);
+    const res = await getConfig(mockRequest());
     expect(res.status).toBe(200);
     const json = await res.json();
     expect(json).toHaveProperty('station1');
