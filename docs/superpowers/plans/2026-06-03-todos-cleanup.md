@@ -1,6 +1,6 @@
 # Todos Cleanup Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Commit the existing Vercel fixes, repair the font preload warning, and fix the broken E2E Playwright test setup.
 
@@ -27,7 +27,7 @@
 **Files:**
 - Modify: `deploy.ps1`, `src/app/api/admin/stories/route.ts`, `src/app/api/stories/route.ts`, `src/lib/adapters/defaults.ts`, `src/lib/adapters/postgres.ts`, `src/lib/adapters/sqlite.ts`, `src/lib/config.ts`, `src/lib/db-adapter.ts`, `src/lib/stories.ts`
 
-- [ ] **Step 1: Stage all modified files**
+- [x] **Step 1: Stage all modified files**
 
 ```bash
 git add deploy.ps1 \
@@ -41,7 +41,7 @@ git add deploy.ps1 \
   src/lib/stories.ts
 ```
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git commit -m "$(cat <<'EOF'
@@ -58,7 +58,7 @@ EOF
 )"
 ```
 
-- [ ] **Step 3: Verify commit**
+- [x] **Step 3: Verify commit**
 
 ```bash
 git log --oneline -3
@@ -74,7 +74,7 @@ Expected: top commit shows the fix message above.
 **Files:**
 - Modify: `src/app/layout.tsx`
 
-- [ ] **Step 1: Update layout to use `inter.className`**
+- [x] **Step 1: Update layout to use `inter.className`**
 
 Open `src/app/layout.tsx`. Change:
 
@@ -101,14 +101,14 @@ const inter = Inter({
 <body className={`${inter.className} antialiased`}>
 ```
 
-- [ ] **Step 2: Verify build passes**
+- [x] **Step 2: Verify build passes**
 
 ```bash
 npm run build 2>&1 | tail -20
 ```
 Expected: `✓ Compiled successfully` — no font-related warnings in the build output.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add src/app/layout.tsx
@@ -136,7 +136,7 @@ EOF
 - Modify: `jest.config.ts`
 - Modify: `package.json`
 
-- [ ] **Step 1: Create root-level playwright.config.ts**
+- [x] **Step 1: Create root-level playwright.config.ts**
 
 Create `playwright.config.ts` at the project root with this content:
 
@@ -161,13 +161,13 @@ export default defineConfig({
 });
 ```
 
-- [ ] **Step 2: Delete the old config inside e2e/**
+- [x] **Step 2: Delete the old config inside e2e/**
 
 ```bash
 git rm e2e/playwright.config.ts
 ```
 
-- [ ] **Step 3: Add testPathIgnorePatterns to jest.config.ts**
+- [x] **Step 3: Add testPathIgnorePatterns to jest.config.ts**
 
 Open `jest.config.ts`. Change:
 
@@ -196,7 +196,7 @@ const config: Config = {
 };
 ```
 
-- [ ] **Step 4: Add test:e2e script to package.json**
+- [x] **Step 4: Add test:e2e script to package.json**
 
 Open `package.json`. Change:
 
@@ -223,21 +223,21 @@ To:
 },
 ```
 
-- [ ] **Step 5: Verify Jest no longer picks up e2e specs**
+- [x] **Step 5: Verify Jest no longer picks up e2e specs**
 
 ```bash
 npx jest --listTests 2>&1
 ```
 Expected: only files under `src/` are listed — no `e2e/` paths.
 
-- [ ] **Step 6: Install Playwright browsers if needed**
+- [x] **Step 6: Install Playwright browsers if needed**
 
 ```bash
 npx playwright install chromium 2>&1 | tail -5
 ```
 Expected: either `chromium` downloads, or `browser is already installed`.
 
-- [ ] **Step 7: Run E2E tests against a running dev server**
+- [x] **Step 7: Run E2E tests against a running dev server**
 
 Start the dev server in a separate terminal first (`npm run dev`), then:
 
@@ -246,7 +246,7 @@ npx playwright test --reporter=list 2>&1
 ```
 Expected: all tests in `e2e/` pass (or at minimum no `TypeError: Class extends value undefined` error).
 
-- [ ] **Step 8: Commit**
+- [x] **Step 8: Commit**
 
 ```bash
 git add playwright.config.ts jest.config.ts package.json
