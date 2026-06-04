@@ -12,6 +12,8 @@
 
 import type { Story, WordLimits } from "@/types/story";
 
+import type { SagaStory, SagaTextBlock, SagaVariableDefinition } from "@/types/saga";
+
 export interface DbAdapter {
   // Stories
   createStory(code: string): Promise<Story>;
@@ -30,6 +32,31 @@ export interface DbAdapter {
   setWordLimits(limits: WordLimits): Promise<void>;
   getAdminPassword(): Promise<string>;
   setAdminPassword(password: string): Promise<void>;
+
+  // Saga: Stories
+  createSagaStory(code: string, variableSnapshot: string): Promise<SagaStory>;
+  getSagaStory(code: string): Promise<SagaStory | null>;
+  updateSagaStory(
+    code: string,
+    updates: Partial<Pick<SagaStory, "character" | "world" | "inventory" | "stations" | "variables" | "status">>
+  ): Promise<SagaStory | null>;
+  listSagaStories(): Promise<SagaStory[]>;
+  deleteSagaStory(code: string): Promise<boolean>;
+  sagaStoryExists(code: string): Promise<boolean>;
+  countSagaStoriesUsingVariable(key: string): Promise<number>;
+
+  // Saga: Templates
+  listSagaTemplates(): Promise<SagaTextBlock[]>;
+  getSagaTemplate(id: number): Promise<SagaTextBlock | null>;
+  createSagaTemplate(block: Omit<SagaTextBlock, "id" | "updatedAt">): Promise<SagaTextBlock>;
+  updateSagaTemplate(id: number, block: Omit<SagaTextBlock, "id" | "updatedAt">): Promise<SagaTextBlock | null>;
+  deleteSagaTemplate(id: number): Promise<boolean>;
+
+  // Saga: Variable Definitions
+  listSagaVariableDefinitions(): Promise<SagaVariableDefinition[]>;
+  getSagaVariableDefinition(key: string): Promise<SagaVariableDefinition | null>;
+  upsertSagaVariableDefinition(def: Omit<SagaVariableDefinition, "updatedAt">): Promise<SagaVariableDefinition>;
+  deleteSagaVariableDefinition(key: string): Promise<boolean>;
 }
 
 let _adapter: DbAdapter | null = null;

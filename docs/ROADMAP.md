@@ -4,6 +4,20 @@ Offene Punkte, sortiert nach Priorität. Jeder Eintrag enthält Kontext und konk
 
 ---
 
+## 🔴 Wird als nächstes implementiert
+
+### Storyteller Saga
+
+Geführter Storytelling-Modus mit vorformulierten Textbausteinen, Mikro-Entscheidungen, Variablen-Substitution und variablem Schwierigkeitsgrad — koexistiert mit dem bestehenden Freitext-Modus.
+
+**Plan:** `docs/superpowers/plans/2026-06-03-storyteller-saga.md`  
+**Spec:** `docs/superpowers/specs/2026-06-03-storyteller-saga-design.md`  
+**Aufwand:** ~3 Stunden (6 Phasen, ≤20 Dateien pro Phase)  
+**Status:** Plan steht — kann direkt gestartet werden  
+**Branching:** Pro Phase ein Feature-Branch (z.B. `feat/saga-phase-0-foundation`)
+
+---
+
 ## 🟡 Mittel (sinnvoll, kein Blocker)
 
 ### Story-Export im Admin-Board

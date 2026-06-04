@@ -1,5 +1,7 @@
 # Storyteller Saga Implementation Plan
 
+> **Status:** ✅ Plan vollständig — bereit zur Ausführung  
+> **Letzte Aktualisierung:** 2026-06-03  
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Add a second mode ("Storyteller Saga") to the existing Storyteller workshop tool, providing guided storytelling with pre-formulated text blocks, micro-decisions, and variable substitution — fully co-existing with the original free-write mode.
@@ -79,6 +81,479 @@ This plan creates/modifies the following files. Each file has a single responsib
 - Phases must not break the 58 existing tests.
 - Each phase ≤ 20 files (the plan keeps to this).
 - Phase 3 (Editor) and Phase 5 (Admin) can run in parallel after Phase 1 is merged.
+
+---
+
+### Task 0.1: Add Saga types file
+
+**Files:**
+- Create: `src/types/saga.ts`
+
+- [ ] **Step 1: Create the file**
+
+```ts
+// src/types/saga.ts
+// All Storyteller Saga types. Single import surface for the rest of the codebase.
+
+export type SagaMode = "saga";
+
+export type SagaArchetype = "Abenteurer" | "Suchender" | "Rebell" | "Hüter";
+export type SagaOrigin = "Stadt" | "Wald" | "Berg" | "Küste" | "Nomade";
+export type SagaSetting = "Dunkel & geheimnisvoll" | "Hell & hoffnungsvoll" | "Magisch & funkelnd";
+
+export interface SagaCharacter {
+  name: string;
+  archetype: SagaArchetype | "";
+  trait: string;
+  weakness: string;
+  goal: string;
+  secret: string;
+  origin: SagaOrigin | "";
+  bond: string;
+}
+
+export interface SagaWorld {
+  setting: SagaSetting | "";
+  location: string;
+  problem: string;
+  hint: string;
+}
+
+export interface SagaMainChoice {
+  id: number;
+  label: string;
+  consequenceBlockId: number;
+}
+
+export interface SagaMicroOption {
+  id: number;
+  label: string;
+  emoji: string;
+  blockId: number;
+  setsVariable?: { key: string; value: string | number | boolean };
+}
+
+export interface SagaMicroChoice {
+  id: number;
+  prompt: string;
+  options: SagaMicroOption[];
+}
+
+export interface SagaStation {
+  id: number;
+  blockSelections: number[];
+  mainChoiceIndex: number | null;
+  completed: boolean;
+}
+
+export interface VariableSnapshotEntry {
+  key: string;
+  label: string;
+  prompt: string;
+  setInStation: number;
+  isMainChoice: boolean;
+  options: VariableOption[];
+}
+
+export interface SagaStory {
+  code: string;
+  mode: "saga";
+  status: "active" | "completed";
+  character: SagaCharacter;
+  world: SagaWorld;
+  inventory: string[];
+  stations: SagaStation[];
+  variables: Record<string, string | number | boolean>;
+  variableSnapshot: VariableSnapshotEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SagaTextBlockCategory =
+  | "intro"
+  | "scene"
+  | "reaction"
+  | "consequence"
+  | "transition"
+  | "summary";
+
+export interface BlockCondition {
+  key: string;
+  equals: string | number | boolean;
+}
+
+export interface SagaTextBlock {
+  id: number;
+  category: SagaTextBlockCategory;
+  template: string;
+  conditions: BlockCondition[];
+  updatedAt: string;
+}
+
+export interface VariableOption {
+  value: string;
+  emoji: string;
+}
+
+export interface SagaVariableDefinition {
+  key: string;
+  label: string;
+  prompt: string;
+  options: VariableOption[];
+  setInStation: number;
+  isMainChoice: boolean;
+  updatedAt: string;
+}
+
+export const DEFAULT_SAGA_CHARACTER: SagaCharacter = {
+  name: "",
+  archetype: "",
+  trait: "",
+  weakness: "",
+  goal: "",
+  secret: "",
+  origin: "",
+  bond: "",
+};
+
+export const DEFAULT_SAGA_WORLD: SagaWorld = {
+  setting: "",
+  location: "",
+  problem: "",
+  hint: "",
+};
+
+export const DEFAULT_SAGA_STATIONS: SagaStation[] = [
+  { id: 1, blockSelections: [], mainChoiceIndex: null, completed: false },
+  { id: 2, blockSelections: [], mainChoiceIndex: null, completed: false },
+  { id: 3, blockSelections: [], mainChoiceIndex: null, completed: false },
+  { id: 4, blockSelections: [], mainChoiceIndex: null, completed: false },
+  { id: 5, blockSelections: [], mainChoiceIndex: null, completed: false },
+  { id: 6, blockSelections: [], mainChoiceIndex: null, completed: false },
+];
+```
+
+- [ ] **Step 2: Verify TypeScript compiles**
+
+Run: `npx tsc --noEmit`
+Expected: No errors.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/types/saga.ts
+git commit -m "feat(saga): add Saga types"
+```
+
+---
+
+### Task 0.2: Add Saga seed data
+
+**Files:**
+- Create: `src/data/saga-defaults.ts`
+
+- [ ] **Step 1: Create the file with the 19 default variables + a starter set of text blocks**
+
+```ts
+// src/data/saga-defaults.ts
+// Initial seed for the Storyteller Saga. Used the first time the DB is opened.
+// Teachers can add/edit/delete via the Admin Template Editor afterwards.
+
+import type { SagaVariableDefinition, SagaTextBlock } from "@/types/saga";
+
+const now = new Date().toISOString();
+
+export const DEFAULT_SAGA_VARIABLES: SagaVariableDefinition[] = [
+  // Charakter-Sheet (free-text fields; no micro choice)
+  { key: "char_name", label: "Name deines Charakters", prompt: "", options: [], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "char_archetype", label: "Wer ist dein Charakter?", prompt: "Was für ein Typ ist dein Charakter?", options: [
+    { value: "die Abenteurerin", emoji: "🦊" },
+    { value: "der Suchende", emoji: "🔍" },
+    { value: "die Rebellin", emoji: "⚡" },
+    { value: "der Hüter", emoji: "🛡️" },
+  ], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "char_origin", label: "Woher kommt dein Charakter?", prompt: "Wo ist dein Charakter zu Hause?", options: [
+    { value: "aus der staubigen Hafenstadt", emoji: "⚓" },
+    { value: "vom Rand des Nebelwalds", emoji: "🌲" },
+    { value: "vom Berg der Stille", emoji: "⛰️" },
+    { value: "vom Schiff der Schaumkrönchen", emoji: "🌊" },
+    { value: "von den wandernden Wegen", emoji: "🛤️" },
+  ], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "char_trait", label: "Eine Eigenart", prompt: "", options: [], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "char_weakness", label: "Eine Schwäche", prompt: "", options: [], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "char_goal", label: "Das große Ziel", prompt: "", options: [], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "char_secret", label: "Ein Geheimnis (optional)", prompt: "", options: [], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "char_bond", label: "Wen oder was liebst du?", prompt: "", options: [], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "world_setting", label: "Die Stimmung der Welt", prompt: "Wie fühlt sich deine Welt an?", options: [
+    { value: "Dunkel & geheimnisvoll", emoji: "🌑" },
+    { value: "Hell & hoffnungsvoll", emoji: "☀️" },
+    { value: "Magisch & funkelnd", emoji: "✨" },
+  ], setInStation: 0, isMainChoice: false, updatedAt: now },
+  { key: "world_location", label: "Wo spielt die Geschichte?", prompt: "", options: [], setInStation: 0, isMainChoice: false, updatedAt: now },
+
+  // Station 1 — Ruf
+  { key: "companion", label: "Dein Begleiter", prompt: "Wen triffst du am Anfang deines Abenteuers?", options: [
+    { value: "der schlaue Fuchs mit den bernsteinfarbenen Augen", emoji: "🦊" },
+    { value: "die kluge Krähe mit den scharfen Federn", emoji: "🦅" },
+    { value: "der kleine Roboter Piep", emoji: "🤖" },
+  ], setInStation: 1, isMainChoice: false, updatedAt: now },
+  { key: "char_emotion", label: "Dein Gefühl", prompt: "Was fühlst du?", options: [
+    { value: "ein kaltes Kribbeln im Bauch", emoji: "🌊" },
+    { value: "Feuer in deiner Brust", emoji: "🔥" },
+    { value: "Ruhig wie ein tiefer See", emoji: "🍃" },
+  ], setInStation: 2, isMainChoice: false, updatedAt: now },
+  { key: "map_name", label: "Was findest du?", prompt: "Was liegt am Wegesrand?", options: [
+    { value: "eine verblasste Lederkarte", emoji: "🗺️" },
+    { value: "die Karte aus dem Traum", emoji: "💭" },
+    { value: "nichts dabei", emoji: "🚫" },
+  ], setInStation: 1, isMainChoice: false, updatedAt: now },
+
+  // Station 3 — Mentor
+  { key: "amulett_name", label: "Dein magischer Gegenstand", prompt: "Was schenkt dir der Mentor?", options: [
+    { value: "das schimmernde Mondamulett", emoji: "🌙" },
+    { value: "der Splitter der Sterne", emoji: "⭐" },
+    { value: "die wärmende Feder", emoji: "🪶" },
+  ], setInStation: 3, isMainChoice: false, updatedAt: now },
+  { key: "lamp_name", label: "Dein Licht", prompt: "Welches Licht findest du?", options: [
+    { value: "die alte Laterne", emoji: "🏮" },
+    { value: "der leuchtende Splitter", emoji: "💎" },
+    { value: "nichts dabei", emoji: "🚫" },
+  ], setInStation: 3, isMainChoice: false, updatedAt: now },
+  { key: "mentor_trust", label: "Vertraut der Mentor dir?", prompt: "Wie reagiert der Mentor?", options: [
+    { value: "vertraut dir blind", emoji: "🤝" },
+    { value: "ist vorsichtig", emoji: "🤔" },
+    { value: "zweifelt an dir", emoji: "😒" },
+  ], setInStation: 3, isMainChoice: true, updatedAt: now },
+
+  // Station 4 — Prüfung
+  { key: "riddle_solved", label: "Lösbar?", prompt: "Wie endet die Prüfung?", options: [
+    { value: "das Rätsel ist gelöst", emoji: "🔓" },
+    { value: "du stehst hilflos davor", emoji: "🧩" },
+  ], setInStation: 4, isMainChoice: true, updatedAt: now },
+
+  // Station 5 — Höhepunkt
+  { key: "confrontation_style", label: "Dein Weg", prompt: "Wie trittst du dem Bösen entgegen?", options: [
+    { value: "direkt und mutig", emoji: "⚔️" },
+    { value: "listig und vorsichtig", emoji: "🦊" },
+    { value: "mitfühlend und klug", emoji: "💡" },
+  ], setInStation: 5, isMainChoice: true, updatedAt: now },
+];
+
+// A small starter set of text blocks. Teachers will add more in the Admin UI.
+export const DEFAULT_SAGA_TEXT_BLOCKS: SagaTextBlock[] = [
+  { id: 1, category: "intro", template: "{char_name}, {char_archetype} {char_origin}, spürte {char_emotion}. Heute begann alles.", conditions: [], updatedAt: now },
+  { id: 2, category: "scene", template: "An deiner Seite war {companion}. Gemeinsam entdecktet ihr {map_name}.", conditions: [], updatedAt: now },
+  { id: 3, category: "scene", template: "Die Welt um dich herum fühlte sich {world_setting} an, in {world_location}.", conditions: [], updatedAt: now },
+  { id: 4, category: "scene", template: "Du zögertest. {char_emotion} hielt dich zurück.", conditions: [], updatedAt: now },
+  { id: 5, category: "consequence", template: "Du gingst los, obwohl {char_emotion} in dir war.", conditions: [], updatedAt: now },
+  { id: 6, category: "scene", template: "Der Mentor schenkte dir {amulett_name} und {lamp_name}.", conditions: [], updatedAt: now },
+  { id: 7, category: "consequence", template: "{mentor_trust}. Du fühltest dich bereit.", conditions: [], updatedAt: now },
+  { id: 8, category: "scene", template: "Die Prüfung wartete. Am Ende: {riddle_solved}.", conditions: [], updatedAt: now },
+  { id: 9, category: "consequence", template: "Im Höhepunkt tratst du {confrontation_style} auf. {companion} stand dir bei.", conditions: [], updatedAt: now },
+  { id: 10, category: "summary", template: "Am Ende warst du nicht mehr dieselbe Person. {char_name}, {char_archetype} {char_origin}, kehrte heim — anders als zuvor.", conditions: [], updatedAt: now },
+];
+```
+
+- [ ] **Step 2: Verify it compiles**
+
+Run: `npx tsc --noEmit`
+Expected: No errors.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/data/saga-defaults.ts
+git commit -m "feat(saga): add default variables and text blocks seed"
+```
+
+---
+
+### Task 0.3: Extend SQLite schema with saga tables
+
+**Files:**
+- Modify: `src/lib/db.ts`
+
+- [ ] **Step 1: Add the new tables + seed to `initSchema()`**
+
+Replace the `initSchema` function with:
+
+```ts
+function initSchema(db: Database.Database): void {
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS stories (
+      code        TEXT PRIMARY KEY,
+      status      TEXT NOT NULL DEFAULT 'active',
+      character   TEXT NOT NULL DEFAULT '{}',
+      world       TEXT NOT NULL DEFAULT '{}',
+      inventory   TEXT NOT NULL DEFAULT '[]',
+      stations    TEXT NOT NULL DEFAULT '[]',
+      created_at  TEXT NOT NULL,
+      updated_at  TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS config (
+      key   TEXT PRIMARY KEY,
+      value TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS saga_stories (
+      code              TEXT PRIMARY KEY,
+      status            TEXT NOT NULL DEFAULT 'active',
+      character         TEXT NOT NULL,
+      world             TEXT NOT NULL,
+      inventory         TEXT NOT NULL DEFAULT '[]',
+      stations          TEXT NOT NULL,
+      variables         TEXT NOT NULL DEFAULT '{}',
+      variable_snapshot TEXT NOT NULL DEFAULT '[]',
+      created_at        TEXT NOT NULL,
+      updated_at        TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS saga_templates (
+      id          INTEGER PRIMARY KEY AUTOINCREMENT,
+      category    TEXT NOT NULL,
+      template    TEXT NOT NULL,
+      conditions  TEXT NOT NULL DEFAULT '[]',
+      updated_at  TEXT NOT NULL
+    );
+
+    CREATE TABLE IF NOT EXISTS saga_variable_definitions (
+      key             TEXT PRIMARY KEY,
+      label           TEXT NOT NULL,
+      prompt          TEXT NOT NULL DEFAULT '',
+      options         TEXT NOT NULL DEFAULT '[]',
+      set_in_station  INTEGER NOT NULL DEFAULT 0,
+      is_main_choice  INTEGER NOT NULL DEFAULT 0,
+      updated_at      TEXT NOT NULL
+    );
+  `);
+
+  // Existing seeds
+  const wl = db.prepare("SELECT key FROM config WHERE key = 'wordLimits'").get();
+  if (!wl) {
+    db.prepare("INSERT INTO config (key, value) VALUES ('wordLimits', ?)").run(
+      JSON.stringify(DEFAULT_WORD_LIMITS)
+    );
+  }
+  const ap = db.prepare("SELECT key FROM config WHERE key = 'adminPassword'").get();
+  if (!ap) {
+    db.prepare("INSERT INTO config (key, value) VALUES ('adminPassword', ?)").run(
+      JSON.stringify("admin")
+    );
+  }
+
+  // Saga seed — only if tables are empty (first run)
+  seedSagaIfEmpty(db);
+}
+
+function seedSagaIfEmpty(db: Database.Database): void {
+  // Variable definitions
+  const varCount = db
+    .prepare("SELECT COUNT(*) as c FROM saga_variable_definitions")
+    .get() as { c: number };
+  if (varCount.c === 0) {
+    const { DEFAULT_SAGA_VARIABLES } = require("@/data/saga-defaults");
+    const insert = db.prepare(
+      `INSERT INTO saga_variable_definitions (key, label, prompt, options, set_in_station, is_main_choice, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)`
+    );
+    for (const v of DEFAULT_SAGA_VARIABLES) {
+      insert.run(
+        v.key,
+        v.label,
+        v.prompt,
+        JSON.stringify(v.options),
+        v.setInStation,
+        v.isMainChoice ? 1 : 0,
+        v.updatedAt
+      );
+    }
+  }
+
+  // Text blocks
+  const blockCount = db
+    .prepare("SELECT COUNT(*) as c FROM saga_templates")
+    .get() as { c: number };
+  if (blockCount.c === 0) {
+    const { DEFAULT_SAGA_TEXT_BLOCKS } = require("@/data/saga-defaults");
+    const insert = db.prepare(
+      `INSERT INTO saga_templates (id, category, template, conditions, updated_at)
+       VALUES (?, ?, ?, ?, ?)`
+    );
+    for (const b of DEFAULT_SAGA_TEXT_BLOCKS) {
+      insert.run(b.id, b.category, b.template, JSON.stringify(b.conditions), b.updatedAt);
+    }
+  }
+}
+```
+
+**Note:** We use `require()` here instead of a top-level import to keep the existing module-level import structure (the function is called inside `initSchema`, which is itself called from `getDb()`).
+
+- [ ] **Step 2: Add a test that the schema is created on a fresh DB**
+
+Create `src/__tests__/saga-db-schema.test.ts`:
+
+```ts
+import { getDb } from "@/lib/db";
+import path from "path";
+import fs from "fs";
+import os from "os";
+
+describe("Saga DB schema", () => {
+  let dbPath: string;
+
+  beforeAll(() => {
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), "storyteller-saga-"));
+    dbPath = path.join(tmpDir, "test.db");
+    process.env.DB_PATH = dbPath;
+  });
+
+  afterAll(() => {
+    if (dbPath && fs.existsSync(dbPath)) {
+      fs.rmSync(path.dirname(dbPath), { recursive: true, force: true });
+    }
+  });
+
+  it("creates the 3 saga tables and seeds them on first init", () => {
+    const db = getDb();
+    const tables = db
+      .prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'saga_%' ORDER BY name")
+      .all() as { name: string }[];
+    expect(tables.map((t) => t.name)).toEqual([
+      "saga_stories",
+      "saga_templates",
+      "saga_variable_definitions",
+    ]);
+
+    const vars = db
+      .prepare("SELECT COUNT(*) as c FROM saga_variable_definitions")
+      .get() as { c: number };
+    expect(vars.c).toBeGreaterThanOrEqual(19);
+
+    const blocks = db
+      .prepare("SELECT COUNT(*) as c FROM saga_templates")
+      .get() as { c: number };
+    expect(blocks.c).toBeGreaterThanOrEqual(10);
+  });
+});
+```
+
+- [ ] **Step 3: Run the test**
+
+Run: `npx jest src/__tests__/saga-db-schema.test.ts`
+Expected: PASS (1 test, 1 expect block with 3 expectations inside).
+
+- [ ] **Step 4: Run all tests**
+
+Run: `npm test`
+Expected: All 58 prior tests + 1 new test pass.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src/lib/db.ts src/__tests__/saga-db-schema.test.ts
+git commit -m "feat(saga): add saga tables and seed to SQLite schema"
+```
 
 ---
 ### Task 0.4: Extend SQLite adapter with saga methods

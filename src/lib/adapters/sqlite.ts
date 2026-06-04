@@ -16,6 +16,16 @@ import { DEFAULT_WORD_LIMITS } from "@/types/story";
 import { getDb } from "@/lib/db";
 
 import { DEFAULT_CHARACTER, DEFAULT_WORLD, DEFAULT_STATIONS } from "./defaults";
+import {
+  DEFAULT_SAGA_CHARACTER,
+  DEFAULT_SAGA_WORLD,
+  DEFAULT_SAGA_STATIONS,
+  type SagaStory,
+  type SagaTextBlock,
+  type SagaTextBlockCategory,
+  type SagaVariableDefinition,
+  type VariableSnapshotEntry,
+} from "@/types/saga";
 
 function parseRow(row: Record<string, unknown>): Story {
   return {
@@ -25,6 +35,22 @@ function parseRow(row: Record<string, unknown>): Story {
     world: JSON.parse(row.world as string) as World,
     inventory: JSON.parse(row.inventory as string) as string[],
     stations: JSON.parse(row.stations as string) as Station[],
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
+}
+
+function parseSagaRow(row: Record<string, unknown>): SagaStory {
+  return {
+    code: row.code as string,
+    mode: "saga",
+    status: row.status as "active" | "completed",
+    character: JSON.parse(row.character as string) as any,
+    world: JSON.parse(row.world as string) as any,
+    inventory: JSON.parse(row.inventory as string) as string[],
+    stations: JSON.parse(row.stations as string) as any,
+    variables: JSON.parse(row.variables as string) as Record<string, string | number | boolean>,
+    variableSnapshot: JSON.parse(row.variable_snapshot as string) as VariableSnapshotEntry[],
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
@@ -156,4 +182,206 @@ export class SqliteAdapter implements DbAdapter {
       "INSERT INTO config (key, value) VALUES ('adminPassword', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value"
     ).run(JSON.stringify(password));
   }
+
+  // ── Saga: Stories ─────────────────────────────────────────────────────────
+
+  async createSagaStory(code: string, variableSnapshot: string): Promise<SagaStory> {
+    const db = getDb();
+    const now = new Date().toISOString();
+    db.prepare(
+      `INSERT INTO saga_stories (code, status, character, world, inventory, stations, variables, variable_snapshot, created_at, updated_at)
+       VALUES (?, 'active', ?, ?, '[]', ?, ?, ?, ?, ?)`
+    ).run(
+      code,
+      JSON.stringify(DEFAULT_SAGA_CHARACTER),
+      JSON.stringify(DEFAULT_SAGA_WORLD),
+      '[]',
+      JSON.stringify(DEFAULT_SAGA_STATIONS),
+      '{}',
+      variableSnapshot,
+      now,
+      now
+    );
+    return (await this.getSagaStory(code))!;
+  }
+
+  async getSagaStory(code: string): Promise<SagaStory | null> {
+    const db = getDb();
+    const row = db.prepare("SELECT * FROM saga_stories WHERE code = ?").get(code) as Record<string, unknown> | undefined;
+    return row ? parseSagaRow(row) : null;
+  }
+
+  async updateSagaStory(
+    code: string,
+    updates: Partial<Pick<SagaStory, "character" | "world" | "inventory" | "stations" | "variables" | "status">>
+  ): Promise<SagaStory | null> {
+    const db = getDb();
+    const parts: string[] = [];
+    const values: unknown[] = [];
+
+    if (updates.status !== undefined) { parts.push("status = ?"); values.push(updates.status); }
+    if (updates.character !== undefined) { parts.push("character = ?"); values.push(JSON.stringify(updates.character)); }
+    if (updates.world !== undefined) { parts.push("world = ?"); values.push(JSON.stringify(updates.world)); }
+    if (updates.inventory !== undefined) { parts.push("inventory = ?"); values.push(JSON.stringify(updates.inventory)); }
+    if (updates.stations !== undefined) { parts.push("stations = ?"); values.push(JSON.stringify(updates.stations)); }
+    if (updates.variables !== undefined) { parts.push("variables = ?"); values.push(JSON.stringify(updates.variables)); }
+
+    if (parts.length === 0) return this.getSagaStory(code);
+
+    parts.push("updated_at = ?");
+    values.push(new Date().toISOString());
+    values.push(code);
+
+    db.prepare(`UPDATE saga_stories SET ${parts.join(", ")} WHERE code = ?`).run(...values);
+    return this.getSagaStory(code);
+  }
+
+  async listSagaStories(): Promise<SagaStory[]> {
+    const db = getDb();
+    const rows = db.prepare("SELECT * FROM saga_stories ORDER BY created_at DESC").all() as Record<string, unknown>[];
+    return rows.map(parseSagaRow);
+  }
+
+  async deleteSagaStory(code: string): Promise<boolean> {
+    const db = getDb();
+    const result = db.prepare("DELETE FROM saga_stories WHERE code = ?").run(code);
+    return result.changes > 0;
+  }
+
+  async sagaStoryExists(code: string): Promise<boolean> {
+    const db = getDb();
+    return !!db.prepare("SELECT 1 FROM saga_stories WHERE code = ?").get(code);
+  }
+
+  async countSagaStoriesUsingVariable(key: string): Promise<number> {
+    const db = getDb();
+    const rows = db.prepare("SELECT variable_snapshot FROM saga_stories").all() as { variable_snapshot: string }[];
+    let n = 0;
+    for (const r of rows) {
+      const snap = JSON.parse(r.variable_snapshot) as VariableSnapshotEntry[];
+      if (snap.some(e => e.key === key)) n++;
+    }
+    return n;
+  }
+
+  // ── Saga: Templates ──────────────────────────────────────────────────────
+
+  async listSagaTemplates(): Promise<SagaTextBlock[]> {
+    const db = getDb();
+    const rows = db.prepare("SELECT * FROM saga_templates ORDER BY id ASC").all() as Record<string, unknown>[];
+    return rows.map(row => ({
+      id: row.id as number,
+      category: row.category as SagaTextBlockCategory,
+      template: row.template as string,
+      conditions: JSON.parse(row.conditions as string),
+      updatedAt: row.updated_at as string,
+    }));
+  }
+
+  async getSagaTemplate(id: number): Promise<SagaTextBlock | null> {
+    const db = getDb();
+    const row = db.prepare("SELECT * FROM saga_templates WHERE id = ?").get(id) as Record<string, unknown> | undefined;
+    if (!row) return null;
+    return {
+      id: row.id as number,
+      category: row.category as SagaTextBlockCategory,
+      template: row.template as string,
+      conditions: JSON.parse(row.conditions as string),
+      updatedAt: row.updated_at as string,
+    };
+  }
+
+  async createSagaTemplate(block: Omit<SagaTextBlock, "id" | "updatedAt">): Promise<SagaTextBlock> {
+    const db = getDb();
+    const now = new Date().toISOString();
+    const result = db.prepare(
+      `INSERT INTO saga_templates (category, template, conditions, updated_at) VALUES (?, ?, ?, ?)`
+    ).run(block.category, block.template, JSON.stringify(block.conditions), now);
+    return {
+      id: result.lastInsertRowid as number,
+      category: block.category,
+      template: block.template,
+      conditions: block.conditions,
+      updatedAt: now,
+    };
+  }
+
+  async updateSagaTemplate(id: number, block: Omit<SagaTextBlock, "id" | "updatedAt">): Promise<SagaTextBlock | null> {
+    const db = getDb();
+    const now = new Date().toISOString();
+    db.prepare(
+      `UPDATE saga_templates SET category = ?, template = ?, conditions = ?, updated_at = ? WHERE id = ?`
+    ).run(block.category, block.template, JSON.stringify(block.conditions), now, id);
+    return this.getSagaTemplate(id);
+  }
+
+  async deleteSagaTemplate(id: number): Promise<boolean> {
+    const db = getDb();
+    const result = db.prepare("DELETE FROM saga_templates WHERE id = ?").run(id);
+    return result.changes > 0;
+  }
+
+  // ── Saga: Variable Definitions ──────────────────────────────────────────
+
+  async listSagaVariableDefinitions(): Promise<SagaVariableDefinition[]> {
+    const db = getDb();
+    const rows = db.prepare("SELECT * FROM saga_variable_definitions ORDER BY set_in_station ASC, key ASC").all() as Record<string, unknown>[];
+    return rows.map(row => ({
+      key: row.key as string,
+      label: row.label as string,
+      prompt: row.prompt as string,
+      options: JSON.parse(row.options as string),
+      setInStation: row.set_in_station as number,
+      isMainChoice: (row.is_main_choice as number) === 1,
+      updatedAt: row.updated_at as string,
+    }));
+  }
+
+  async getSagaVariableDefinition(key: string): Promise<SagaVariableDefinition | null> {
+    const db = getDb();
+    const row = db.prepare("SELECT * FROM saga_variable_definitions WHERE key = ?").get(key) as Record<string, unknown> | undefined;
+    if (!row) return null;
+    return {
+      key: row.key as string,
+      label: row.label as string,
+      prompt: row.prompt as string,
+      options: JSON.parse(row.options as string),
+      setInStation: row.set_in_station as number,
+      isMainChoice: (row.is_main_choice as number) === 1,
+      updatedAt: row.updated_at as string,
+    };
+  }
+
+  async upsertSagaVariableDefinition(def: Omit<SagaVariableDefinition, "updatedAt">): Promise<SagaVariableDefinition> {
+    const db = getDb();
+    const now = new Date().toISOString();
+    db.prepare(
+      `INSERT INTO saga_variable_definitions (key, label, prompt, options, set_in_station, is_main_choice, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?)
+       ON CONFLICT(key) DO UPDATE SET
+         label = excluded.label,
+         prompt = excluded.prompt,
+         options = excluded.options,
+         set_in_station = excluded.set_in_station,
+         is_main_choice = excluded.is_main_choice,
+         updated_at = excluded.updated_at`
+    ).run(
+      def.key,
+      def.label,
+      def.prompt,
+      JSON.stringify(def.options),
+      def.setInStation,
+      def.isMainChoice ? 1 : 0,
+      now
+    );
+    return (await this.getSagaVariableDefinition(def.key))!;
+  }
+
+  async deleteSagaVariableDefinition(key: string): Promise<boolean> {
+    const db = getDb();
+    const result = db.prepare("DELETE FROM saga_variable_definitions WHERE key = ?").run(key);
+    return result.changes > 0;
+  }
+
 }
+
