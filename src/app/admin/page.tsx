@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import type { Story, WordLimits } from "@/types/story";
 import { DEFAULT_WORD_LIMITS } from "@/types/story";
 import AdminStoryRow from "@/components/AdminStoryRow";
@@ -187,9 +188,16 @@ function Dashboard({ password, initialStories, initialLimits }: DashboardProps) 
       <header className="sticky top-0 z-10 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <h1 className="text-sm font-black uppercase tracking-[0.3em] text-[var(--color-text)]">
-              Storytelling Workshop
-            </h1>
+            <Link
+              href="/"
+              className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+              title="Zurück zur Startseite"
+            >
+              <span className="text-base">🏠</span>
+              <h1 className="text-sm font-black uppercase tracking-[0.3em] text-[var(--color-text)]">
+                Storytelling Workshop
+              </h1>
+            </Link>
             <span
               className="rounded-lg px-2 py-0.5 text-xs font-bold uppercase tracking-wider"
               style={{ background: "var(--color-amber-light)", color: "var(--color-amber)" }}

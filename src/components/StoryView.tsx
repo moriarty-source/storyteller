@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import type { Story } from "@/types/story";
 import { STATIONS } from "@/types/story";
 
@@ -49,12 +50,19 @@ export default function StoryView({ story }: StoryViewProps) {
         className="sticky top-0 z-10 border-b border-gray-200 bg-white px-6 py-4 shadow-sm"
       >
         <div className="mx-auto flex max-w-2xl items-center justify-between">
-          <h1
-            className="text-sm font-black uppercase tracking-[0.3em]"
-            style={{ color: "var(--color-text)" }}
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+            title="Zurück zur Startseite"
           >
-            Story Maker
-          </h1>
+            <span className="text-base">🏠</span>
+            <h1
+              className="text-sm font-black uppercase tracking-[0.3em]"
+              style={{ color: "var(--color-text)" }}
+            >
+              Story Maker
+            </h1>
+          </Link>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 leading-none mb-0.5">
               Dein persönlicher Story-Code
@@ -194,17 +202,23 @@ export default function StoryView({ story }: StoryViewProps) {
 
       </main>
 
-      {/* ── Fixed PDF Export Bar ── */}
+      {/* ── Fixed PDF Export/Navigation Bar ── */}
       <div
         className="fixed bottom-0 left-0 right-0 border-t border-gray-200 bg-white px-4 py-3 shadow-md"
       >
-        <div className="mx-auto max-w-2xl">
+        <div className="mx-auto max-w-2xl flex gap-3">
+          <Link
+            href={`/story/${story.code}`}
+            className="flex-1 rounded-2xl border-2 border-gray-200 px-6 py-3 text-sm font-bold text-gray-700 text-center hover:border-gray-300 active:scale-[0.98] transition-all min-h-[44px] flex items-center justify-center"
+          >
+            ✏️ Zum Editor
+          </Link>
           <button
             type="button"
             onClick={handleExport}
             disabled={exporting}
             className={[
-              "w-full rounded-2xl px-6 py-3 text-sm font-bold text-white",
+              "flex-1 rounded-2xl px-6 py-3 text-sm font-bold text-white",
               "shadow-sm transition-all duration-150",
               exporting
                 ? "opacity-60 cursor-not-allowed"

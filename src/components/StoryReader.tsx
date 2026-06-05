@@ -2,6 +2,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import { Story as InkStory } from "inkjs";
 import { STATIONS } from "@/types/story";
 import type { Story } from "@/types/story";
@@ -147,12 +148,19 @@ export default function StoryReader({ story }: StoryReaderProps) {
       {/* Header */}
       <header className="sticky top-0 z-20 border-b border-gray-200 bg-white px-4 py-3 shadow-sm">
         <div className="mx-auto flex max-w-xl items-center justify-between">
-          <span
-            className="text-sm font-black uppercase tracking-[0.3em]"
-            style={{ color: "var(--color-text)" }}
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+            title="Zurück zur Startseite"
           >
-            Story Maker
-          </span>
+            <span className="text-base">🏠</span>
+            <span
+              className="text-sm font-black uppercase tracking-[0.3em]"
+              style={{ color: "var(--color-text)" }}
+            >
+              Story Maker
+            </span>
+          </Link>
           <div className="flex flex-col items-end">
             <span className="text-[10px] font-semibold uppercase tracking-wide text-gray-400 leading-none mb-0.5">
               Dein persönlicher Story-Code
@@ -385,6 +393,15 @@ export default function StoryReader({ story }: StoryReaderProps) {
             </div>
 
             <div className="flex flex-col gap-3">
+              <Link
+                href={`/story/${story.code}`}
+                className={[
+                  "w-full rounded-2xl px-6 py-3.5 text-sm font-bold text-white text-center flex items-center justify-center shadow-sm hover:brightness-105 active:scale-[0.98] transition-all min-h-[48px]",
+                ].join(" ")}
+                style={{ background: "var(--color-amber)" }}
+              >
+                ✏️ Zurück zum Editor
+              </Link>
               <button
                 type="button"
                 onClick={handleRestart}
@@ -395,6 +412,15 @@ export default function StoryReader({ story }: StoryReaderProps) {
               >
                 🔄 Nochmal lesen
               </button>
+              <Link
+                href="/"
+                className={[
+                  "w-full rounded-2xl border-2 border-gray-200 px-6 py-3.5 text-sm font-bold text-gray-700 text-center flex items-center justify-center",
+                  "hover:border-gray-300 active:scale-[0.98] transition-all min-h-[48px]",
+                ].join(" ")}
+              >
+                🏠 Zurück zur Startseite
+              </Link>
             </div>
           </div>
         )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback, useEffect } from "react";
+import Link from "next/link";
 import type { Story, Character, World, Station, WordLimits } from "@/types/story";
 import { STATIONS } from "@/types/story";
 import CharacterSheet from "@/components/CharacterSheet";
@@ -185,12 +186,19 @@ function handleStationNext() {
               <span className="text-lg" aria-hidden="true">☰</span>
             </button>
           )}
-          <h1
-            className="text-sm font-black uppercase tracking-[0.3em] select-none"
-            style={{ color: "var(--color-text)" }}
+          <Link
+            href="/"
+            className="flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+            title="Zurück zur Startseite"
           >
-            Story Maker
-          </h1>
+            <span className="text-base">🏠</span>
+            <h1
+              className="text-sm font-black uppercase tracking-[0.3em] select-none"
+              style={{ color: "var(--color-text)" }}
+            >
+              Story Maker
+            </h1>
+          </Link>
         </div>
 
         <div className="flex flex-col items-end">

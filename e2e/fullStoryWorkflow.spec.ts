@@ -70,6 +70,9 @@ test('author creates complete story, admin marks completed, view displays story'
   const row = page.locator(`text=${code}`).first().locator('..').locator('..'); // move to the row element
   await row.getByRole('button', { name: 'Abschließen' }).click();
 
+  // Wait for the status to change to "Abgeschlossen"
+  await expect(row.getByText('Abgeschlossen ✓')).toBeVisible();
+
   // 6. Verify view page displays the completed story
   await page.goto(`/story/${code}/view`);
   await expect(page).toHaveURL(`/story/${code}/view`);
