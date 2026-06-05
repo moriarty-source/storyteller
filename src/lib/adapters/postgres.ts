@@ -20,42 +20,118 @@ import { DEFAULT_SAGA_VARIABLES, DEFAULT_SAGA_TEXT_BLOCKS } from "@/data/saga-de
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseRow(row: Record<string, any>): Story {
+  let character: Character;
+  try {
+    character =
+      typeof row.character === "string"
+        ? (JSON.parse(row.character) as Character)
+        : (row.character as Character);
+    if (!character || typeof character !== "object") character = DEFAULT_CHARACTER;
+  } catch {
+    character = DEFAULT_CHARACTER;
+  }
+
+  let world: World;
+  try {
+    world =
+      typeof row.world === "string"
+        ? (JSON.parse(row.world) as World)
+        : (row.world as World);
+    if (!world || typeof world !== "object") world = DEFAULT_WORLD;
+  } catch {
+    world = DEFAULT_WORLD;
+  }
+
+  let inventory: string[];
+  try {
+    inventory =
+      typeof row.inventory === "string"
+        ? (JSON.parse(row.inventory) as string[])
+        : (row.inventory as string[]);
+    if (!Array.isArray(inventory)) inventory = [];
+  } catch {
+    inventory = [];
+  }
+
+  let stations: Station[];
+  try {
+    stations =
+      typeof row.stations === "string"
+        ? (JSON.parse(row.stations) as Station[])
+        : (row.stations as Station[]);
+    if (!Array.isArray(stations)) stations = DEFAULT_STATIONS;
+  } catch {
+    stations = DEFAULT_STATIONS;
+  }
+
   return {
     code: row.code as string,
     status: row.status as StoryStatus,
-    // Neon returns TEXT columns as strings; parse JSON
-    character:
-      typeof row.character === "string"
-        ? (JSON.parse(row.character) as Character)
-        : (row.character as Character),
-    world:
-      typeof row.world === "string"
-        ? (JSON.parse(row.world) as World)
-        : (row.world as World),
-    inventory:
-      typeof row.inventory === "string"
-        ? (JSON.parse(row.inventory) as string[])
-        : (row.inventory as string[]),
-    stations:
-      typeof row.stations === "string"
-        ? (JSON.parse(row.stations) as Station[])
-        : (row.stations as Station[]),
+    character,
+    world,
+    inventory,
+    stations,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
 }
 
 function parseSagaRow(row: Record<string, any>): SagaStory {
+  let character: any;
+  try {
+    character = typeof row.character === "string" ? JSON.parse(row.character) : row.character;
+  } catch {
+    character = DEFAULT_SAGA_CHARACTER;
+  }
+
+  let world: any;
+  try {
+    world = typeof row.world === "string" ? JSON.parse(row.world) : row.world;
+  } catch {
+    world = DEFAULT_SAGA_WORLD;
+  }
+
+  let inventory: string[];
+  try {
+    inventory = typeof row.inventory === "string" ? JSON.parse(row.inventory) : row.inventory;
+    if (!Array.isArray(inventory)) inventory = [];
+  } catch {
+    inventory = [];
+  }
+
+  let stations: any;
+  try {
+    stations = typeof row.stations === "string" ? JSON.parse(row.stations) : row.stations;
+  } catch {
+    stations = DEFAULT_SAGA_STATIONS;
+  }
+
+  let variables: Record<string, string | number | boolean>;
+  try {
+    variables = typeof row.variables === "string" ? JSON.parse(row.variables) : row.variables;
+    if (!variables || typeof variables !== "object") variables = {};
+  } catch {
+    variables = {};
+  }
+
+  let variableSnapshot: VariableSnapshotEntry[];
+  try {
+    variableSnapshot = typeof row.variable_snapshot === "string" ? JSON.parse(row.variable_snapshot) : row.variable_snapshot;
+    if (!Array.isArray(variableSnapshot)) variableSnapshot = [];
+  } catch {
+    variableSnapshot = [];
+  }
+
   return {
     code: row.code as string,
     mode: "saga",
     status: row.status as "active" | "completed",
-    character: typeof row.character === "string" ? JSON.parse(row.character) as any : (row.character as any),
-    world: typeof row.world === "string" ? JSON.parse(row.world) as any : (row.world as any),
-    inventory: typeof row.inventory === "string" ? JSON.parse(row.inventory) as string[] : (row.inventory as string[]),
-    stations: typeof row.stations === "string" ? JSON.parse(row.stations) as any : (row.stations as any),
-    variables: typeof row.variables === "string" ? JSON.parse(row.variables) as Record<string, string | number | boolean> : (row.variables as Record<string, string | number | boolean>),
-    variableSnapshot: typeof row.variable_snapshot === "string" ? JSON.parse(row.variable_snapshot) as VariableSnapshotEntry[] : (row.variable_snapshot as VariableSnapshotEntry[]),
+    character: character ?? DEFAULT_SAGA_CHARACTER,
+    world: world ?? DEFAULT_SAGA_WORLD,
+    inventory,
+    stations: stations ?? DEFAULT_SAGA_STATIONS,
+    variables,
+    variableSnapshot,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };

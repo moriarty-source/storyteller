@@ -28,46 +28,104 @@ import {
 } from "@/types/saga";
 
 function parseRow(row: Record<string, unknown>): Story {
+  let character: Character;
+  try {
+    character = JSON.parse(row.character as string) as Character;
+    if (!character || typeof character !== "object") character = DEFAULT_CHARACTER;
+  } catch {
+    character = DEFAULT_CHARACTER;
+  }
+
+  let world: World;
+  try {
+    world = JSON.parse(row.world as string) as World;
+    if (!world || typeof world !== "object") world = DEFAULT_WORLD;
+  } catch {
+    world = DEFAULT_WORLD;
+  }
+
+  let inventory: string[];
+  try {
+    inventory = JSON.parse(row.inventory as string) as string[];
+    if (!Array.isArray(inventory)) inventory = [];
+  } catch {
+    inventory = [];
+  }
+
+  let stations: Station[];
+  try {
+    stations = JSON.parse(row.stations as string) as Station[];
+    if (!Array.isArray(stations)) stations = DEFAULT_STATIONS;
+  } catch {
+    stations = DEFAULT_STATIONS;
+  }
+
   return {
     code: row.code as string,
     status: row.status as StoryStatus,
-    character: JSON.parse(row.character as string) as Character,
-    world: JSON.parse(row.world as string) as World,
-    inventory: JSON.parse(row.inventory as string) as string[],
-    stations: JSON.parse(row.stations as string) as Station[],
+    character,
+    world,
+    inventory,
+    stations,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };
 }
 
 function parseSagaRow(row: Record<string, unknown>): SagaStory {
-  const character = typeof row.character === "string"
-    ? (JSON.parse(row.character as string) as any)
-    : (row.character as any);
-  const world = typeof row.world === "string"
-    ? (JSON.parse(row.world as string) as any)
-    : (row.world as any);
-  const inventory = typeof row.inventory === "string"
-    ? (JSON.parse(row.inventory as string) as string[])
-    : (row.inventory as string[]);
-  const stations = typeof row.stations === "string"
-    ? (JSON.parse(row.stations as string) as any)
-    : (row.stations as any);
-  const variables = typeof row.variables === "string"
-    ? (JSON.parse(row.variables as string) as Record<string, string | number | boolean>)
-    : (row.variables as Record<string, string | number | boolean>);
-  const variableSnapshot = typeof row.variable_snapshot === "string"
-    ? (JSON.parse(row.variable_snapshot as string) as VariableSnapshotEntry[])
-    : (row.variable_snapshot as VariableSnapshotEntry[]);
+  let character: any;
+  try {
+    character = typeof row.character === "string" ? JSON.parse(row.character as string) : row.character;
+  } catch {
+    character = DEFAULT_SAGA_CHARACTER;
+  }
+
+  let world: any;
+  try {
+    world = typeof row.world === "string" ? JSON.parse(row.world as string) : row.world;
+  } catch {
+    world = DEFAULT_SAGA_WORLD;
+  }
+
+  let inventory: string[];
+  try {
+    inventory = typeof row.inventory === "string" ? JSON.parse(row.inventory as string) : row.inventory;
+    if (!Array.isArray(inventory)) inventory = [];
+  } catch {
+    inventory = [];
+  }
+
+  let stations: any;
+  try {
+    stations = typeof row.stations === "string" ? JSON.parse(row.stations as string) : row.stations;
+  } catch {
+    stations = DEFAULT_SAGA_STATIONS;
+  }
+
+  let variables: Record<string, string | number | boolean>;
+  try {
+    variables = typeof row.variables === "string" ? JSON.parse(row.variables as string) : row.variables;
+    if (!variables || typeof variables !== "object") variables = {};
+  } catch {
+    variables = {};
+  }
+
+  let variableSnapshot: VariableSnapshotEntry[];
+  try {
+    variableSnapshot = typeof row.variable_snapshot === "string" ? JSON.parse(row.variable_snapshot as string) : row.variable_snapshot;
+    if (!Array.isArray(variableSnapshot)) variableSnapshot = [];
+  } catch {
+    variableSnapshot = [];
+  }
 
   return {
     code: row.code as string,
     mode: "saga",
     status: row.status as "active" | "completed",
-    character,
-    world,
+    character: character ?? DEFAULT_SAGA_CHARACTER,
+    world: world ?? DEFAULT_SAGA_WORLD,
     inventory,
-    stations,
+    stations: stations ?? DEFAULT_SAGA_STATIONS,
     variables,
     variableSnapshot,
     createdAt: row.created_at as string,
