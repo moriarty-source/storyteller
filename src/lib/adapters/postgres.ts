@@ -76,15 +76,15 @@ function parseRow(row: Record<string, any>): Story {
   };
 }
 
-function parseSagaRow(row: Record<string, any>): SagaStory {
-  let character: any;
+function parseSagaRow(row: Record<string, unknown>): SagaStory {
+  let character: unknown;
   try {
     character = typeof row.character === "string" ? JSON.parse(row.character) : row.character;
   } catch {
     character = DEFAULT_SAGA_CHARACTER;
   }
 
-  let world: any;
+  let world: unknown;
   try {
     world = typeof row.world === "string" ? JSON.parse(row.world) : row.world;
   } catch {
@@ -99,7 +99,7 @@ function parseSagaRow(row: Record<string, any>): SagaStory {
     inventory = [];
   }
 
-  let stations: any;
+  let stations: unknown;
   try {
     stations = typeof row.stations === "string" ? JSON.parse(row.stations) : row.stations;
   } catch {
@@ -126,10 +126,10 @@ function parseSagaRow(row: Record<string, any>): SagaStory {
     code: row.code as string,
     mode: "saga",
     status: row.status as "active" | "completed",
-    character: character ?? DEFAULT_SAGA_CHARACTER,
-    world: world ?? DEFAULT_SAGA_WORLD,
+    character: (character as SagaStory["character"]) ?? DEFAULT_SAGA_CHARACTER,
+    world: (world as SagaStory["world"]) ?? DEFAULT_SAGA_WORLD,
     inventory,
-    stations: stations ?? DEFAULT_SAGA_STATIONS,
+    stations: (stations as SagaStory["stations"]) ?? DEFAULT_SAGA_STATIONS,
     variables,
     variableSnapshot,
     createdAt: row.created_at as string,

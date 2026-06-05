@@ -117,7 +117,6 @@ function seedSagaIfEmpty(db: Database.Database): void {
   }
   const blockCount = db.prepare("SELECT COUNT(*) as c FROM saga_templates").get() as { c: number };
   if (blockCount.c === 0) {
-    const { DEFAULT_SAGA_TEXT_BLOCKS } = require("@/data/saga-defaults");
     const insert = db.prepare(
       `INSERT INTO saga_templates (id, category, template, conditions, updated_at)
        VALUES (?, ?, ?, ?, ?)`
