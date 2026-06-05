@@ -339,7 +339,18 @@ export class PostgresAdapter implements DbAdapter {
     await this.ensureSchema();
     const rows = (await this.sql`SELECT value FROM config WHERE key = 'wordLimits'`) as { value: string }[];
     if (!rows[0]) return DEFAULT_WORD_LIMITS;
-    return JSON.parse(rows[0].value) as WordLimits;
+    try {
+      const parsed = JSON.parse(rows[0].value);
+      if (parsed && typeof parsed === "object") {
+        if ("wordLimits" in parsed && parsed.wordLimits && typeof parsed.wordLimits === "object") {
+          return parsed.wordLimits as WordLimits;
+        }
+        return parsed as WordLimits;
+      }
+      return DEFAULT_WORD_LIMITS;
+    } catch {
+      return DEFAULT_WORD_LIMITS;
+    }
   }
 
   async setWordLimits(limits: WordLimits): Promise<void> {

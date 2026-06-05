@@ -230,7 +230,18 @@ export class SqliteAdapter implements DbAdapter {
       .prepare("SELECT value FROM config WHERE key = 'wordLimits'")
       .get() as { value: string } | undefined;
     if (!row) return DEFAULT_WORD_LIMITS;
-    return JSON.parse(row.value) as WordLimits;
+    try {
+      const parsed = JSON.parse(row.value);
+      if (parsed && typeof parsed === "object") {
+        if ("wordLimits" in parsed && parsed.wordLimits && typeof parsed.wordLimits === "object") {
+          return parsed.wordLimits as WordLimits;
+        }
+        return parsed as WordLimits;
+      }
+      return DEFAULT_WORD_LIMITS;
+    } catch {
+      return DEFAULT_WORD_LIMITS;
+    }
   }
 
   async setWordLimits(limits: WordLimits): Promise<void> {
