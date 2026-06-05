@@ -35,12 +35,12 @@ test('author creates complete story, admin marks completed, view displays story'
     // Fill main story text with long content to unlock choices
     await page.fill(`#station-text-${stationId}`, longText());
 
-    // Wait for the add‑choice button (it appears after 60+ words)
-    const addChoiceBtn = page.getByRole('button', { name: '+ Entscheidung hinzufügen' });
-    await addChoiceBtn.waitFor({ state: 'visible', timeout: 5000 });
-
     // Station 1‑5 require exactly 2 choices (meta.minChoices = 2)
     if (stationId <= 5) {
+      // Wait for the add‑choice button (it appears after 60+ words)
+      const addChoiceBtn = page.getByRole('button', { name: '+ Entscheidung hinzufügen' });
+      await addChoiceBtn.waitFor({ state: 'visible', timeout: 5000 });
+
       // Add first choice
       await addChoiceBtn.click();
       // Add second choice
@@ -74,7 +74,7 @@ test('author creates complete story, admin marks completed, view displays story'
   await page.goto(`/story/${code}/view`);
   await expect(page).toHaveURL(`/story/${code}/view`);
   // Verify character name appears
-  await expect(page.getByText('Lena')).toBeVisible();
+  await expect(page.getByText('Lena', { exact: true })).toBeVisible();
   // Verify a station title appears (e.g., "Ruf zum Abenteuer")
   await expect(page.getByText('RUF ZUM ABENTEUER')).toBeVisible();
 });

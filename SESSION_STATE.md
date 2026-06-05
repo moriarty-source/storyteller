@@ -1,0 +1,26 @@
+# Session State – 2026-06-05
+
+## Was passiert ist
+- Fehlerbehebung bei der Typzuweisung in `src/lib/adapters/postgres.ts` (Fehlendes non-null-assertion Operator `!` bei `createSagaStory`).
+- Fehlerbehebung bei der Typzuweisung in `src/lib/adapters/sqlite.ts` (Fehlerhafte Typzuweisungen in `parseSagaRow`).
+- Datenbank-Synchronisation: PostgresAdapter (`src/lib/adapters/postgres.ts`) wurde aktualisiert, um die Saga-Tabellen (`saga_stories`, `saga_templates`, `saga_variable_definitions`) bei der Schema-Initialisierung anzulegen und mit Seed-Daten zu befüllen.
+- Behebung von API-Fehlern (Payload- und Methoden-Mismatches):
+  - In `src/app/api/admin/config/route.ts` gab der `GET`-Endpunkt die Limits unverpackt zurück, während das Frontend das Objekt unter dem Key `{ wordLimits }` erwartete (führte zu Absturz in `ConfigPanel`). GET gibt die Limits nun korrekt verpackt zurück, und der Endpunkt unterstützt auch `PUT` und `PATCH` für verpackte Payloads.
+  - In `src/app/api/admin/stories/[code]/route.ts` wurde die Methode `PUT` hinzugefügt (da das Frontend `PUT` statt `PATCH` zum Abschließen einer Story aufruft; führte zu `405 Method Not Allowed`).
+- Anpassung der E2E Playwright-Tests:
+  - `storyWorkflow.spec.ts` erwartet nun "Story Maker" statt "Storyteller" auf der Homepage.
+  - `fullStoryWorkflow.spec.ts` wartet nur noch auf Station 1–5 auf den "+ Entscheidung hinzufügen"-Button, da Station 6 keine Entscheidungen mehr besitzt. Ebenso wurde die exakte Namenssuche angepasst.
+
+## ✅ VERIFICATION RESULTS
+- Erfolgreicher Build (`npm run build`).
+- Alle Jest-Tests erfolgreich durchgelaufen (58 Tests).
+- Alle Playwright E2E-Tests erfolgreich durchgelaufen (`npm run test:e2e`).
+
+## 📁 KEY FILES MODIFIED
+- `src/lib/adapters/postgres.ts`
+- `src/lib/adapters/sqlite.ts`
+- `src/app/api/admin/config/route.ts`
+- `src/app/api/admin/stories/[code]/route.ts`
+- `e2e/storyWorkflow.spec.ts`
+- `e2e/fullStoryWorkflow.spec.ts`
+- `SESSION_STATE.md`

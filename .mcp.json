@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mcp__aws-bedrock__ask_opus": {
+      "command": "node",
+      "args": ["C:/Users/Offic/.claude/mcp-servers/ask-opus/ask-opus.cjs"]
+    }
+  }
+}

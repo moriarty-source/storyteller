@@ -147,3 +147,21 @@ Mit den bereits implementierten Datenbank‑Tabellen, TypeScript‑Typen und Ada
 * Die API‑Methoden in eigenen Endpunkten nutzen, um ein interaktives Text‑Adventure zu bauen.
 
 **Happy coding!**
+
+---
+
+## TODOs / Weiteres
+
+- **Frontend UI**: Build React components for saga creation (character picker, template selector, variable snapshot editor) and display rendered saga text.
+- **API Endpoints**: Add Next.js API routes (`/api/sagas/*`) for all CRUD operations (create, read, update, delete, list, template management, variable definition management, count usage).
+- **Authentication / Authorization**: Protect saga mutation endpoints (admin only) – reuse existing admin auth middleware.
+- **Unit & Integration Tests**: Extend test suite with full coverage of saga adapter methods (SQLite & Postgres), API route tests, and rendering logic.
+- **Validation**: Add runtime validation (zod / yup) for incoming variable snapshot payloads and template creation requests.
+- **Internationalisation**: Provide a mechanism to load language‑specific default seeds (e.g., `saga-defaults.en.ts`, `saga-defaults.es.ts`) and switch at runtime.
+- **Documentation**: Add a link to this saga‑doc in the project README and create a quick‑start guide for contributors.
+- **CI Lint Fixes**: Ensure the linting rules stay satisfied after future changes (no `any`, no `require`).
+- **Performance**: Add indexes on `saga_templates.category` and `saga_variable_definitions.key` for faster lookups on large data sets.
+- **Export / Import**: Implement script to export/import saga data (stories, templates, variable definitions) for backup/restore.
+
+These items can be tackled in subsequent phases; the core saga functionality is already in place and production‑ready.
+

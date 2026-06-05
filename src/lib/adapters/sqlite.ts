@@ -41,16 +41,35 @@ function parseRow(row: Record<string, unknown>): Story {
 }
 
 function parseSagaRow(row: Record<string, unknown>): SagaStory {
+  const character = typeof row.character === "string"
+    ? (JSON.parse(row.character as string) as any)
+    : (row.character as any);
+  const world = typeof row.world === "string"
+    ? (JSON.parse(row.world as string) as any)
+    : (row.world as any);
+  const inventory = typeof row.inventory === "string"
+    ? (JSON.parse(row.inventory as string) as string[])
+    : (row.inventory as string[]);
+  const stations = typeof row.stations === "string"
+    ? (JSON.parse(row.stations as string) as any)
+    : (row.stations as any);
+  const variables = typeof row.variables === "string"
+    ? (JSON.parse(row.variables as string) as Record<string, string | number | boolean>)
+    : (row.variables as Record<string, string | number | boolean>);
+  const variableSnapshot = typeof row.variable_snapshot === "string"
+    ? (JSON.parse(row.variable_snapshot as string) as VariableSnapshotEntry[])
+    : (row.variable_snapshot as VariableSnapshotEntry[]);
+
   return {
     code: row.code as string,
     mode: "saga",
     status: row.status as "active" | "completed",
-    character: JSON.parse(row.character as string) as any,
-    world: JSON.parse(row.world as string) as any,
-    inventory: JSON.parse(row.inventory as string) as string[],
-    stations: JSON.parse(row.stations as string) as any,
-    variables: JSON.parse(row.variables as string) as Record<string, string | number | boolean>,
-    variableSnapshot: JSON.parse(row.variable_snapshot as string) as VariableSnapshotEntry[],
+    character,
+    world,
+    inventory,
+    stations,
+    variables,
+    variableSnapshot,
     createdAt: row.created_at as string,
     updatedAt: row.updated_at as string,
   };

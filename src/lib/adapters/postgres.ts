@@ -16,6 +16,7 @@ import { DEFAULT_WORD_LIMITS } from "@/types/story";
 import { neon } from "@neondatabase/serverless";
 import { DEFAULT_CHARACTER, DEFAULT_WORLD, DEFAULT_STATIONS } from "./defaults";
 import { DEFAULT_SAGA_CHARACTER, DEFAULT_SAGA_WORLD, DEFAULT_SAGA_STATIONS, type SagaStory, type SagaTextBlock, type SagaTextBlockCategory, type SagaVariableDefinition, type VariableSnapshotEntry } from "@/types/saga";
+import { DEFAULT_SAGA_VARIABLES, DEFAULT_SAGA_TEXT_BLOCKS } from "@/data/saga-defaults";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function parseRow(row: Record<string, any>): Story {
@@ -103,6 +104,72 @@ export class PostgresAdapter implements DbAdapter {
       VALUES ('adminPassword', ${JSON.stringify("admin")})
       ON CONFLICT (key) DO NOTHING
     `;
+
+    // Saga Tables
+    await this.sql`
+      CREATE TABLE IF NOT EXISTS saga_stories (
+        code              TEXT PRIMARY KEY,
+        status            TEXT NOT NULL DEFAULT 'active',
+        character         TEXT NOT NULL DEFAULT '{}',
+        world             TEXT NOT NULL DEFAULT '{}',
+        inventory         TEXT NOT NULL DEFAULT '[]',
+        stations          TEXT NOT NULL DEFAULT '[]',
+        variables         TEXT NOT NULL DEFAULT '{}',
+        variable_snapshot TEXT NOT NULL DEFAULT '[]',
+        created_at        TEXT NOT NULL,
+        updated_at        TEXT NOT NULL
+      )
+    `;
+
+    await this.sql`
+      CREATE TABLE IF NOT EXISTS saga_templates (
+        id          SERIAL PRIMARY KEY,
+        category    TEXT NOT NULL,
+        template    TEXT NOT NULL,
+        conditions  TEXT NOT NULL DEFAULT '[]',
+        updated_at  TEXT NOT NULL
+      )
+    `;
+
+    await this.sql`
+      CREATE TABLE IF NOT EXISTS saga_variable_definitions (
+        key             TEXT PRIMARY KEY,
+        label           TEXT NOT NULL,
+        prompt          TEXT NOT NULL DEFAULT '',
+        options         TEXT NOT NULL DEFAULT '[]',
+        set_in_station  INTEGER NOT NULL DEFAULT 0,
+        is_main_choice  INTEGER NOT NULL DEFAULT 0,
+        updated_at      TEXT NOT NULL
+      )
+    `;
+
+    // Seed Saga Variables if empty
+    const varCount = await this.sql`SELECT COUNT(*) as c FROM saga_variable_definitions` as { c: string }[];
+    if (parseInt(varCount[0].c, 10) === 0) {
+      for (const v of DEFAULT_SAGA_VARIABLES) {
+        await this.sql`
+          INSERT INTO saga_variable_definitions (key, label, prompt, options, set_in_station, is_main_choice, updated_at)
+          VALUES (${v.key}, ${v.label}, ${v.prompt}, ${JSON.stringify(v.options)}, ${v.setInStation}, ${v.isMainChoice ? 1 : 0}, ${v.updatedAt})
+          ON CONFLICT (key) DO NOTHING
+        `;
+      }
+    }
+
+    // Seed Saga Templates if empty
+    const blockCount = await this.sql`SELECT COUNT(*) as c FROM saga_templates` as { c: string }[];
+    if (parseInt(blockCount[0].c, 10) === 0) {
+      for (const b of DEFAULT_SAGA_TEXT_BLOCKS) {
+        await this.sql`
+          INSERT INTO saga_templates (id, category, template, conditions, updated_at)
+          VALUES (${b.id}, ${b.category}, ${b.template}, ${JSON.stringify(b.conditions)}, ${b.updatedAt})
+          ON CONFLICT (id) DO NOTHING
+        `;
+      }
+      // Align serial sequence after explicit id inserts
+      await this.sql`
+        SELECT setval(pg_get_serial_sequence('saga_templates', 'id'), COALESCE(MAX(id), 1)) FROM saga_templates
+      `;
+    }
 
     this.initialized = true;
   }
@@ -248,7 +315,7 @@ export class PostgresAdapter implements DbAdapter {
         ${now}
       )
     `;
-    return await this.getSagaStory(code);
+    return (await this.getSagaStory(code))!;
   }
 
   async getSagaStory(code: string): Promise<SagaStory | null> {

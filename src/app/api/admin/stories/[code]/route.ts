@@ -18,6 +18,10 @@ export async function PATCH(req: NextRequest, { params }: RouteContext) {
   return NextResponse.json(story);
 }
 
+export async function PUT(req: NextRequest, context: RouteContext) {
+  return PATCH(req, context);
+}
+
 export async function DELETE(req: NextRequest, { params }: RouteContext) {
   if (!(await checkAdminAuth(req))) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

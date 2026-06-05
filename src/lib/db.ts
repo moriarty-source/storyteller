@@ -107,8 +107,7 @@ function initSchema(db: Database.Database): void {
 function seedSagaIfEmpty(db: Database.Database): void {
   const varCount = db.prepare("SELECT COUNT(*) as c FROM saga_variable_definitions").get() as { c: number };
   if (varCount.c === 0) {
-    const { DEFAULT_SAGA_VARIABLES } = require("@/data/saga-defaults");
-    const insert = db.prepare(
+        const insert = db.prepare(
       `INSERT INTO saga_variable_definitions (key, label, prompt, options, set_in_station, is_main_choice, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?)`
     );
