@@ -43,13 +43,21 @@ if ($LASTEXITCODE -ne 0) {
 Write-Host "[4/5] Building on Pi..." -ForegroundColor Yellow
 $sshCmd = @'
 export NVM_DIR=\"\$HOME/.nvm\"
-[ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\"
+[ -s \"\$NVM_DIR/nvm.sh\" ] && . \"\$NVM_DIR/nvm.sh\" || true
 set -e
 rm -rf ~/storyteller
 git clone ~/storyteller.bundle ~/storyteller
 cd ~/storyteller
-npmPath=$(command -v npm || which npm || echo '/home/pi/.nvm/versions/node/v22.22.3/bin/npm')
-export PATH="$(dirname $npmPath):$PATH"
+# Find npm path without command substitution or chaining
+npmPath='/home/pi/.nvm/versions/node/v22.22.3/bin/npm'
+if [ -x "/usr/local/bin/npm" ]; then npmPath='/usr/local/bin/npm'; fi
+if [ -x "/usr/bin/npm" ]; then npmPath='/usr/bin/npm'; fi
+# Get directory part of path
+npmDir=""
+case "$npmPath" in
+    */*) npmDir="${npmPath%/*}" ;;
+esac
+export PATH="${npmDir}:$PATH"
 npm ci
 npm run build
 echo $npmPath

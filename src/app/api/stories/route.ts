@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { createStory, storyExists } from "@/lib/stories";
 import { generateCode } from "@/lib/codeGenerator";
 
-export async function POST(_request: NextRequest) {
+export async function POST() {
   try {
     let code = generateCode();
     let attempts = 0;

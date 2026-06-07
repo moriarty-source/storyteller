@@ -1,4 +1,4 @@
-import type { Story, Station } from "@/types/story";
+import type { Story } from "@/types/story";
 
 /**
  * Converts a Story object into valid Ink markup for playable via inkjs.

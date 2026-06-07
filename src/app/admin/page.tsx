@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import Link from "next/link";
 import type { Story, WordLimits } from "@/types/story";
-import { DEFAULT_WORD_LIMITS } from "@/types/story";
 import AdminStoryRow from "@/components/AdminStoryRow";
 import ConfigPanel from "@/components/ConfigPanel";
 
